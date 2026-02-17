@@ -1,75 +1,255 @@
-# Template
+# Jamf Protect API SDK for Go
 
-This repository serves as a **Default Template Repository** according official [GitHub Contributing Guidelines][ProjectSetup] for healthy contributions. It brings you clean default Templates for several areas:
+[![Go Reference](https://pkg.go.dev/badge/github.com/deploymenttheory/go-api-sdk-jamfprotect.svg)](https://pkg.go.dev/github.com/deploymenttheory/go-api-sdk-jamfprotect)
+[![Go Report Card](https://goreportcard.com/badge/github.com/deploymenttheory/go-api-sdk-jamfprotect)](https://goreportcard.com/report/github.com/deploymenttheory/go-api-sdk-jamfprotect)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-- [Azure DevOps Pull Requests](.azuredevops/PULL_REQUEST_TEMPLATE.md) ([`.azuredevops\PULL_REQUEST_TEMPLATE.md`](`.azuredevops\PULL_REQUEST_TEMPLATE.md`))
-- [Azure Pipelines](.pipelines/pipeline.yml) ([`.pipelines/pipeline.yml`](`.pipelines/pipeline.yml`))
-- [GitHub Workflows](.github/workflows/)
-  - [Super Linter](.github/workflows/linter.yml) ([`.github/workflows/linter.yml`](`.github/workflows/linter.yml`))
-  - [Sample Workflows](.github/workflows/workflow.yml) ([`.github/workflows/workflow.yml`](`.github/workflows/workflow.yml`))
-- [GitHub Pull Requests](.github/PULL_REQUEST_TEMPLATE.md) ([`.github/PULL_REQUEST_TEMPLATE.md`](`.github/PULL_REQUEST_TEMPLATE.md`))
-- [GitHub Issues](.github/ISSUE_TEMPLATE/)
-  - [Feature Requests](.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md) ([`.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md`](`.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md`))
-  - [Bug Reports](.github/ISSUE_TEMPLATE/BUG_REPORT.md) ([`.github/ISSUE_TEMPLATE/BUG_REPORT.md`](`.github/ISSUE_TEMPLATE/BUG_REPORT.md`))
-- [Codeowners](.github/CODEOWNERS) ([`.github/CODEOWNERS`](`.github/CODEOWNERS`)) _adjust usernames once cloned_
-- [Wiki and Documentation](docs/) ([`docs/`](`docs/`))
-- [gitignore](.gitignore) ([`.gitignore`](.gitignore))
-- [gitattributes](.gitattributes) ([`.gitattributes`](.gitattributes))
-- [Changelog](CHANGELOG.md) ([`CHANGELOG.md`](`CHANGELOG.md`))
-- [Code of Conduct](CODE_OF_CONDUCT.md) ([`CODE_OF_CONDUCT.md`](`CODE_OF_CONDUCT.md`))
-- [Contribution](CONTRIBUTING.md) ([`CONTRIBUTING.md`](`CONTRIBUTING.md`))
-- [License](LICENSE) ([`LICENSE`](`LICENSE`)) _adjust projectname once cloned_
-- [Readme](README.md) ([`README.md`](`README.md`))
-- [Security](SECURITY.md) ([`SECURITY.md`](`SECURITY.md`))
+A comprehensive Go SDK for interacting with the Jamf Protect GraphQL API. This SDK provides a type-safe, idiomatic Go interface for managing Jamf Protect resources including plans, analytics, action configurations, and more.
 
+## Features
 
-## Status
+- **GraphQL-First Design**: Built specifically for GraphQL APIs with proper query/mutation support
+- **OAuth2 Authentication**: Secure client credentials flow with automatic token refresh
+- **Type-Safe Operations**: Strongly-typed Go structs for all API resources
+- **Automatic Pagination**: Built-in handling of paginated responses
+- **Comprehensive Error Handling**: Detailed GraphQL error parsing and reporting
+- **Logging Support**: Integrated with zap for structured logging
+- **Context Support**: Full context.Context support for cancellation and timeouts
+- **Production Ready**: Used in production Terraform providers
 
-[![Super Linter](<https://github.com/segraef/Template/actions/workflows/linter.yml/badge.svg>)](<https://github.com/segraef/Template/actions/workflows/linter.yml>)
+## Installation
 
-[![Sample Workflow](<https://github.com/segraef/Template/actions/workflows/workflow.yml/badge.svg>)](<https://github.com/segraef/Template/actions/workflows/workflow.yml>)
+```bash
+go get github.com/deploymenttheory/go-api-sdk-jamfprotect
+```
 
-## Creating a repository from a template
+## Quick Start
 
-You can [generate](https://github.com/segraef/Template/generate) a new repository with the same directory structure and files as an existing repository. More details can be found [here][CreateFromTemplate].
+### Basic Usage
 
-## Reporting Issues and Feedback
+```go
+package main
 
-### Issues and Bugs
+import (
+    "context"
+    "log"
+    
+    jamfprotect "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect"
+    "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
+)
 
-If you find any bugs, please file an issue in the [GitHub Issues][GitHubIssues] page. Please fill out the provided template with the appropriate information.
+func main() {
+    // Create client with credentials
+    client, err := jamfprotect.NewClient(
+        "your-client-id",
+        "your-client-secret",
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    ctx := context.Background()
+    
+    // List all plans
+    plans, err := client.Plans.ListPlans(ctx)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    for _, plan := range plans {
+        log.Printf("Plan: %s (ID: %s)", plan.Name, plan.ID)
+    }
+}
+```
 
-If you are taking the time to mention a problem, even a seemingly minor one, it is greatly appreciated, and a totally valid contribution to this project. **Thank you!**
+### Using Environment Variables
 
-## Feedback
+```go
+// Set environment variables:
+// export JAMFPROTECT_CLIENT_ID="your-client-id"
+// export JAMFPROTECT_CLIENT_SECRET="your-client-secret"
+// export JAMFPROTECT_BASE_URL="https://apis.jamfprotect.cloud" (optional)
 
-If there is a feature you would like to see in here, please file an issue or feature request in the [GitHub Issues][GitHubIssues] page to provide direct feedback.
+client, err := jamfprotect.NewClientFromEnv()
+if err != nil {
+    log.Fatal(err)
+}
+```
 
-## Contribution
+### With Custom Configuration
 
-If you would like to become an active contributor to this repository or project, please follow the instructions provided in [`CONTRIBUTING.md`][Contributing].
+```go
+client, err := jamfprotect.NewClient(
+    "your-client-id",
+    "your-client-secret",
+    client.WithBaseURL("https://custom.jamfprotect.cloud"),
+    client.WithTimeout(60 * time.Second),
+    client.WithDebug(),
+)
+```
 
-## Learn More
+## Services
 
-* [GitHub Documentation][GitHubDocs]
-* [Azure DevOps Documentation][AzureDevOpsDocs]
-* [Microsoft Azure Documentation][MicrosoftAzureDocs]
+### Plans
 
-<!-- References -->
+Manage Jamf Protect security plans:
 
-<!-- Local -->
-[ProjectSetup]: <https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions>
-[CreateFromTemplate]: <https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/creating-a-repository-from-a-template>
-[GitHubDocs]: <https://docs.github.com/>
-[AzureDevOpsDocs]: <https://docs.microsoft.com/en-us/azure/devops/?view=azure-devops>
-[GitHubIssues]: <https://github.com/segraef/Template/issues>
-[Contributing]: CONTRIBUTING.md
+```go
+// Create a plan
+logLevel := "INFO"
+request := &plans.CreatePlanRequest{
+    Name:          "Production Security Plan",
+    Description:   "Security configuration for production systems",
+    LogLevel:      &logLevel,
+    ActionConfigs: "action-config-id",
+    AutoUpdate:    true,
+    CommsConfig: plans.CommsConfigInput{
+        FQDN:     "protect.example.com",
+        Protocol: "HTTPS",
+    },
+    InfoSync: plans.InfoSyncInput{
+        Attrs:                []string{"hostname", "osVersion"},
+        InsightsSyncInterval: 3600,
+    },
+    SignaturesFeedConfig: plans.SignaturesFeedConfigInput{
+        Mode: "AUTO",
+    },
+}
 
-<!-- External -->
-[Az]: <https://img.shields.io/powershellgallery/v/Az.svg?style=flat-square&label=Az>
-[AzGallery]: <https://www.powershellgallery.com/packages/Az/>
-[PowerShellCore]: <https://github.com/PowerShell/PowerShell/releases/latest>
+plan, err := client.Plans.CreatePlan(ctx, request)
 
-<!-- Docs -->
-[MicrosoftAzureDocs]: <https://docs.microsoft.com/en-us/azure/>
-[PowerShellDocs]: <https://docs.microsoft.com/en-us/powershell/>
+// Get a plan
+plan, err := client.Plans.GetPlan(ctx, "plan-id")
+
+// Update a plan
+plan, err := client.Plans.UpdatePlan(ctx, "plan-id", updateRequest)
+
+// Delete a plan
+err := client.Plans.DeletePlan(ctx, "plan-id")
+
+// List all plans (with automatic pagination)
+plans, err := client.Plans.ListPlans(ctx)
+```
+
+## Configuration Options
+
+The SDK supports various configuration options:
+
+### Base URL
+```go
+client.WithBaseURL("https://custom.jamfprotect.cloud")
+```
+
+### Timeout
+```go
+client.WithTimeout(90 * time.Second)
+```
+
+### Custom HTTP Client
+```go
+httpClient := &http.Client{
+    Timeout: 60 * time.Second,
+}
+client.WithHTTPClient(httpClient)
+```
+
+### Logging
+```go
+// With zap logger
+logger, _ := zap.NewProduction()
+client.WithLogger(logger)
+
+// Debug mode
+client.WithDebug()
+```
+
+### User Agent
+```go
+// Custom user agent
+client.WithUserAgent("MyApp/1.0.0")
+
+// Append to default user agent
+client.WithCustomAgent("MyApp/1.0.0")
+```
+
+## Examples
+
+Comprehensive examples for each service are available in the [examples](./examples) directory:
+
+### Plans
+- [Create Plan](./examples/jamfprotect/plans/CreatePlan/main.go)
+- [Get Plan](./examples/jamfprotect/plans/GetPlan/main.go)
+- [Update Plan](./examples/jamfprotect/plans/UpdatePlan/main.go)
+- [Delete Plan](./examples/jamfprotect/plans/DeletePlan/main.go)
+- [List Plans](./examples/jamfprotect/plans/ListPlans/main.go)
+
+## Error Handling
+
+The SDK provides comprehensive error handling with specific error types:
+
+```go
+plan, err := client.Plans.GetPlan(ctx, "invalid-id")
+if err != nil {
+    if errors.Is(err, client.ErrNotFound) {
+        log.Println("Plan not found")
+    } else if errors.Is(err, client.ErrAuthentication) {
+        log.Println("Authentication failed")
+    } else if errors.Is(err, client.ErrGraphQL) {
+        log.Printf("GraphQL error: %v", err)
+    } else {
+        log.Printf("Unexpected error: %v", err)
+    }
+}
+```
+
+## GraphQL API
+
+This SDK is built specifically for the Jamf Protect GraphQL API. The API uses:
+
+- **OAuth2 Client Credentials Flow** for authentication
+- **GraphQL** for all data operations
+- **Two Endpoints**:
+  - `/app` - Full API access (recommended)
+  - `/graphql` - Limited schema endpoint
+
+## Architecture
+
+The SDK follows a layered architecture:
+
+```
+jamfprotect/
+├── client/          # HTTP transport, auth, GraphQL handling
+├── services/        # Service-specific operations
+│   └── plans/      # Plans service
+└── new.go          # Main client wrapper
+```
+
+### Key Components
+
+- **Transport Layer**: Handles HTTP communication, OAuth2 authentication, and GraphQL request/response processing
+- **Service Layer**: Provides domain-specific operations (Plans, Analytics, etc.)
+- **Client Wrapper**: Aggregates all services into a unified interface
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- **Documentation**: [Full API Documentation](https://pkg.go.dev/github.com/deploymenttheory/go-api-sdk-jamfprotect)
+- **Issues**: [GitHub Issues](https://github.com/deploymenttheory/go-api-sdk-jamfprotect/issues)
+- **Jamf Protect API**: [Official API Documentation](https://learn.jamf.com/bundle/jamf-protect-documentation/page/API_Documentation.html)
+
+## Related Projects
+
+- [terraform-provider-jamfprotect](https://github.com/smithjw/terraform-provider-jamfprotect) - Terraform provider using this SDK
+- [go-api-sdk-jamfpro](https://github.com/deploymenttheory/go-api-sdk-jamfpro) - Jamf Pro API SDK
+- [go-api-sdk-virustotal](https://github.com/deploymenttheory/go-api-sdk-virustotal) - VirusTotal API SDK
+
+## Acknowledgments
+
+Built with inspiration from the patterns established in the VirusTotal SDK and the smithjw Terraform provider for Jamf Protect.
