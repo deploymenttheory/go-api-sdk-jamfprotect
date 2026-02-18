@@ -35,7 +35,7 @@ func (s *Service) CreateTelemetryV2(ctx context.Context, req *CreateTelemetryV2R
 		"Content-Type": client.ContentTypeJSON,
 	}
 
-	vars := buildTelemetryV2Variables(req)
+	vars := telemetryMutationVariables(req)
 	vars["RBAC_Plan"] = true
 	var result struct {
 		CreateTelemetryV2 *TelemetryV2 `json:"createTelemetryV2"`
@@ -96,7 +96,7 @@ func (s *Service) UpdateTelemetryV2(ctx context.Context, id string, req *UpdateT
 		"Content-Type": client.ContentTypeJSON,
 	}
 
-	vars := buildTelemetryV2Variables(req)
+	vars := telemetryMutationVariables(req)
 	vars["id"] = id
 	vars["RBAC_Plan"] = true
 	var result struct {
@@ -175,48 +175,6 @@ func (s *Service) ListTelemetriesV2(ctx context.Context) ([]TelemetryV2, *interf
 	}
 
 	return allItems, lastResp, nil
-}
-
-// buildTelemetryV2Variables builds the GraphQL variables map from a request struct
-func buildTelemetryV2Variables(req any) map[string]any {
-	var (
-		name               string
-		description        string
-		logFiles           []string
-		logFileCollection  bool
-		performanceMetrics bool
-		events             []string
-		fileHashing        bool
-	)
-
-	switch r := req.(type) {
-	case *CreateTelemetryV2Request:
-		name = r.Name
-		description = r.Description
-		logFiles = r.LogFiles
-		logFileCollection = r.LogFileCollection
-		performanceMetrics = r.PerformanceMetrics
-		events = r.Events
-		fileHashing = r.FileHashing
-	case *UpdateTelemetryV2Request:
-		name = r.Name
-		description = r.Description
-		logFiles = r.LogFiles
-		logFileCollection = r.LogFileCollection
-		performanceMetrics = r.PerformanceMetrics
-		events = r.Events
-		fileHashing = r.FileHashing
-	}
-
-	return map[string]any{
-		"name":               name,
-		"description":        description,
-		"logFiles":           logFiles,
-		"logFileCollection":  logFileCollection,
-		"performanceMetrics": performanceMetrics,
-		"events":             events,
-		"fileHashing":        fileHashing,
-	}
 }
 
 // ListTelemetriesCombined retrieves both v1 and v2 telemetries in a single query.

@@ -2,6 +2,9 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
@@ -41,18 +44,8 @@ func (m *UnifiedLoggingFilterMock) RegisterCreateUnifiedLoggingFilterMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("createUnifiedLoggingFilter"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createUnifiedLoggingFilter": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Unified Logging Filter",
-						"description": "A test unified logging filter",
-						"enabled":     true,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_unified_logging_filter_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -65,18 +58,8 @@ func (m *UnifiedLoggingFilterMock) RegisterGetUnifiedLoggingFilterMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getUnifiedLoggingFilter"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getUnifiedLoggingFilter": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Unified Logging Filter",
-						"description": "A test unified logging filter",
-						"enabled":     true,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_unified_logging_filter_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -89,18 +72,8 @@ func (m *UnifiedLoggingFilterMock) RegisterUpdateUnifiedLoggingFilterMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("updateUnifiedLoggingFilter"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updateUnifiedLoggingFilter": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Updated Unified Logging Filter",
-						"description": "An updated unified logging filter",
-						"enabled":     true,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_unified_logging_filter_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -113,13 +86,8 @@ func (m *UnifiedLoggingFilterMock) RegisterDeleteUnifiedLoggingFilterMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("deleteUnifiedLoggingFilter"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deleteUnifiedLoggingFilter": map[string]any{
-						"uuid": "test-uuid-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_unified_logging_filter_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -132,24 +100,8 @@ func (m *UnifiedLoggingFilterMock) RegisterListUnifiedLoggingFiltersMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listUnifiedLoggingFilters"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listUnifiedLoggingFilters": map[string]any{
-						"items": []map[string]any{
-							{
-								"uuid":        "test-uuid-1234",
-								"name":        "Test Unified Logging Filter",
-								"description": "A test unified logging filter",
-								"enabled":     true,
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_unified_logging_filters_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -162,15 +114,8 @@ func (m *UnifiedLoggingFilterMock) RegisterListUnifiedLoggingFilterNamesMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listUnifiedLoggingFilterNames"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listUnifiedLoggingFilterNames": map[string]any{
-						"items": []map[string]any{
-							{"name": "Test Unified Logging Filter"},
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_unified_logging_filter_names_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -183,11 +128,8 @@ func (m *UnifiedLoggingFilterMock) RegisterUnauthorizedErrorMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getUnifiedLoggingFilter"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -200,15 +142,23 @@ func (m *UnifiedLoggingFilterMock) RegisterNotFoundErrorMock() {
 		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getUnifiedLoggingFilter"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getUnifiedLoggingFilter": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Unified logging filter not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *UnifiedLoggingFilterMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }

@@ -35,7 +35,7 @@ func (s *Service) CreateAnalyticSet(ctx context.Context, req *CreateAnalyticSetR
 		"Content-Type": client.ContentTypeJSON,
 	}
 
-	vars := buildAnalyticSetVariables(req, "")
+	vars := analyticSetMutationVariables(req, "")
 	var result struct {
 		CreateAnalyticSet *AnalyticSet `json:"createAnalyticSet"`
 	}
@@ -96,7 +96,7 @@ func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *Updat
 		"Content-Type": client.ContentTypeJSON,
 	}
 
-	vars := buildAnalyticSetVariables(req, uuid)
+	vars := analyticSetMutationVariables(req, uuid)
 	var result struct {
 		UpdateAnalyticSet *AnalyticSet `json:"updateAnalyticSet"`
 	}
@@ -172,42 +172,4 @@ func (s *Service) ListAnalyticSets(ctx context.Context) ([]AnalyticSet, *interfa
 	}
 
 	return allItems, lastResp, nil
-}
-
-// buildAnalyticSetVariables builds the GraphQL variables map from a request struct
-func buildAnalyticSetVariables(req any, uuid string) map[string]any {
-	var (
-		name        string
-		description string
-		types       []string
-		analytics   []string
-	)
-
-	switch r := req.(type) {
-	case *CreateAnalyticSetRequest:
-		name = r.Name
-		description = r.Description
-		types = r.Types
-		analytics = r.Analytics
-	case *UpdateAnalyticSetRequest:
-		name = r.Name
-		description = r.Description
-		types = r.Types
-		analytics = r.Analytics
-	}
-
-	vars := map[string]any{
-		"name":             name,
-		"description":      description,
-		"types":            types,
-		"analytics":        analytics,
-		"RBAC_Plan":        true,
-		"excludeAnalytics": false,
-	}
-
-	if uuid != "" {
-		vars["uuid"] = uuid
-	}
-
-	return vars
 }

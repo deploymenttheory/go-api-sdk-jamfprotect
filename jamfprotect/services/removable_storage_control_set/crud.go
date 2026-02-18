@@ -182,46 +182,6 @@ func (s *Service) ListUSBControlSets(ctx context.Context) ([]USBControlSet, *int
 	return allItems, lastResp, nil
 }
 
-// usbControlSetMutationVariables returns GraphQL variables for createUSBControlSet/updateUSBControlSet mutations.
-func usbControlSetMutationVariables(req any, id string) map[string]any {
-	var (
-		name                 string
-		description          string
-		defaultMountAction   string
-		defaultMessageAction string
-		rules                []USBControlRuleInput
-	)
-
-	switch r := req.(type) {
-	case *CreateUSBControlSetRequest:
-		name = r.Name
-		description = r.Description
-		defaultMountAction = r.DefaultMountAction
-		defaultMessageAction = r.DefaultMessageAction
-		rules = r.Rules
-	case *UpdateUSBControlSetRequest:
-		name = r.Name
-		description = r.Description
-		defaultMountAction = r.DefaultMountAction
-		defaultMessageAction = r.DefaultMessageAction
-		rules = r.Rules
-	}
-
-	vars := map[string]any{
-		"name":                 name,
-		"description":          description,
-		"defaultMountAction":   defaultMountAction,
-		"defaultMessageAction": defaultMessageAction,
-		"rules":                rules,
-	}
-
-	if id != "" {
-		vars["id"] = id
-	}
-
-	return vars
-}
-
 // ListUSBControlSetNames retrieves only the names of all USB control sets
 func (s *Service) ListUSBControlSetNames(ctx context.Context) ([]string, *interfaces.Response, error) {
 	headers := map[string]string{

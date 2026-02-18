@@ -1,0 +1,1 @@
+{"data":{"listTelemetries":{"items":[{"id":"tel-id-1","name":"Test Telemetry V1","description":"A test v1 telemetry","verbose":false,"level":0}]},"listTelemetriesV2":{"items":[{"id":"telv2-id-1","name":"Test Telemetry V2","description":"A test v2 telemetry"}]}}}

@@ -2,6 +2,9 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
@@ -41,22 +44,8 @@ func (m *TelemetryMock) RegisterCreateTelemetryV2Mock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("createTelemetryV2"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createTelemetryV2": map[string]any{
-						"id":                 "test-id-1234",
-						"name":               "Test Telemetry V2",
-						"description":        "A test telemetry v2",
-						"logFiles":           []string{},
-						"logFileCollection":  false,
-						"performanceMetrics": false,
-						"events":             []string{},
-						"fileHashing":        false,
-						"created":            "2024-01-01T00:00:00Z",
-						"updated":            "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_telemetry_v2_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -69,22 +58,8 @@ func (m *TelemetryMock) RegisterGetTelemetryV2Mock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getTelemetryV2"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getTelemetryV2": map[string]any{
-						"id":                 "test-id-1234",
-						"name":               "Test Telemetry V2",
-						"description":        "A test telemetry v2",
-						"logFiles":           []string{},
-						"logFileCollection":  false,
-						"performanceMetrics": false,
-						"events":             []string{},
-						"fileHashing":        false,
-						"created":            "2024-01-01T00:00:00Z",
-						"updated":            "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_telemetry_v2_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -97,22 +72,8 @@ func (m *TelemetryMock) RegisterUpdateTelemetryV2Mock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("updateTelemetryV2"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updateTelemetryV2": map[string]any{
-						"id":                 "test-id-1234",
-						"name":               "Updated Telemetry V2",
-						"description":        "An updated telemetry v2",
-						"logFiles":           []string{},
-						"logFileCollection":  false,
-						"performanceMetrics": false,
-						"events":             []string{},
-						"fileHashing":        false,
-						"created":            "2024-01-01T00:00:00Z",
-						"updated":            "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_telemetry_v2_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -125,13 +86,8 @@ func (m *TelemetryMock) RegisterDeleteTelemetryV2Mock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("deleteTelemetryV2"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deleteTelemetryV2": map[string]any{
-						"id": "test-id-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_telemetry_v2_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -144,23 +100,8 @@ func (m *TelemetryMock) RegisterListTelemetriesV2Mock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listTelemetriesV2"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listTelemetriesV2": map[string]any{
-						"items": []map[string]any{
-							{
-								"id":          "test-id-1234",
-								"name":        "Test Telemetry V2",
-								"description": "A test telemetry v2",
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_telemetries_v2_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -173,38 +114,8 @@ func (m *TelemetryMock) RegisterListTelemetriesCombinedMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listTelemetriesCombined"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listTelemetries": map[string]any{
-						"items": []map[string]any{
-							{
-								"id":          "tel-id-1",
-								"name":        "Test Telemetry V1",
-								"description": "A test v1 telemetry",
-								"verbose":     false,
-								"level":       0,
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-					"listTelemetriesV2": map[string]any{
-						"items": []map[string]any{
-							{
-								"id":          "telv2-id-1",
-								"name":        "Test Telemetry V2",
-								"description": "A test v2 telemetry",
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_telemetries_combined_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -217,11 +128,8 @@ func (m *TelemetryMock) RegisterUnauthorizedErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getTelemetryV2"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -234,15 +142,23 @@ func (m *TelemetryMock) RegisterNotFoundErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getTelemetryV2"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getTelemetryV2": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Telemetry not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *TelemetryMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }
