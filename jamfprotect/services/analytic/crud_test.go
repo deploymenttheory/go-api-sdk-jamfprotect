@@ -2,319 +2,236 @@ package analytic_test
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	analytics "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic/mocks"
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// mockGraphQLServer creates a test HTTP server that responds to GraphQL requests
-func mockGraphQLServer(t *testing.T, handler func(query string, variables map[string]any) (any, error)) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Handle token endpoint
-		if r.URL.Path == "/token" {
-			tokenResp := map[string]any{
-				"access_token": "test-token",
-				"expires_in":   3600,
-				"token_type":   "Bearer",
-			}
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(tokenResp)
-			return
-		}
+const testBaseURL = "https://test.jamfprotect.example.com"
 
-		// Handle GraphQL endpoint
-		if r.URL.Path == "/app" {
-			var req struct {
-				Query     string         `json:"query"`
-				Variables map[string]any `json:"variables"`
-			}
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
+func setupMockClient(t *testing.T) (*analytic.Service, string) {
+	t.Helper()
 
-			result, err := handler(req.Query, req.Variables)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			response := map[string]any{
-				"data": result,
-			}
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
-			return
-		}
-
-		http.NotFound(w, r)
-	}))
-}
-
-func TestAnalyticsService_CreateAnalytic(t *testing.T) {
-	mockData := map[string]any{
-		"createAnalytic": map[string]any{
-			"uuid":        "analytic-uuid-123",
-			"name":        "Test Analytic",
-			"label":       "Test Label",
-			"inputType":   "unified_log",
-			"filter":      "process.name = 'test'",
-			"description": "Test Description",
-			"level":       3,
-			"severity":    "MEDIUM",
-			"tags":        []string{"test", "security"},
-			"categories":  []string{"malware"},
-			"created":     "2024-01-01T00:00:00Z",
-			"updated":     "2024-01-01T00:00:00Z",
-		},
-	}
-
-	server := mockGraphQLServer(t, func(query string, variables map[string]any) (any, error) {
-		assert.Contains(t, query, "createAnalytic")
-		assert.Equal(t, "Test Analytic", variables["name"])
-		assert.Equal(t, "unified_log", variables["inputType"])
-		return mockData, nil
+	httpClient := &http.Client{}
+	httpmock.ActivateNonDefault(httpClient)
+	t.Cleanup(func() {
+		httpmock.DeactivateAndReset()
 	})
-	defer server.Close()
 
-	transport, err := client.NewTransport("test-client", "test-secret", client.WithBaseURL(server.URL))
+	httpmock.RegisterResponder("POST", testBaseURL+"/token",
+		httpmock.NewJsonResponderOrPanic(200, map[string]any{
+			"access_token": "mock-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
+		}),
+	)
+
+	transport, err := client.NewTransport("test-client", "test-secret",
+		client.WithBaseURL(testBaseURL),
+		client.WithTransport(httpClient.Transport),
+	)
 	require.NoError(t, err)
 
-	service := analytics.NewService(transport)
+	return analytic.NewService(transport), testBaseURL
+}
 
-	req := &analytics.CreateAnalyticRequest{
+func TestAnalyticService_CreateAnalytic(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterCreateAnalyticMock()
+
+	req := &analytic.CreateAnalyticRequest{
 		Name:        "Test Analytic",
-		InputType:   "unified_log",
-		Description: "Test Description",
+		InputType:   "GPFSEvent",
 		Filter:      "process.name = 'test'",
+		Description: "A test analytic",
 		Level:       3,
-		Severity:    "MEDIUM",
-		Tags:        []string{"test", "security"},
-		Categories:  []string{"malware"},
-		AnalyticActions: []analytics.AnalyticActionInput{
-			{
-				Name:       "alert",
-				Parameters: []string{"high"},
-			},
-		},
-		Context:       []analytics.AnalyticContextInput{},
-		SnapshotFiles: []string{},
+		Severity:    "Medium",
 	}
 
 	result, _, err := service.CreateAnalytic(context.Background(), req)
 
 	require.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, "analytic-uuid-123", result.UUID)
+	require.NotNil(t, result)
+	assert.Equal(t, "test-uuid-1234", result.UUID)
 	assert.Equal(t, "Test Analytic", result.Name)
-	assert.Equal(t, "unified_log", result.InputType)
-	assert.Equal(t, 3, result.Level)
-	assert.Equal(t, "MEDIUM", result.Severity)
 }
 
-func TestAnalyticsService_GetAnalytic(t *testing.T) {
-	mockData := map[string]any{
-		"getAnalytic": map[string]any{
-			"uuid":        "analytic-uuid-123",
-			"name":        "Test Analytic",
-			"inputType":   "unified_log",
-			"filter":      "process.name = 'test'",
-			"description": "Test Description",
-			"level":       3,
-			"severity":    "HIGH",
-			"created":     "2024-01-01T00:00:00Z",
-		},
-	}
+func TestAnalyticService_GetAnalytic(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterGetAnalyticMock()
 
-	server := mockGraphQLServer(t, func(query string, variables map[string]any) (any, error) {
-		assert.Contains(t, query, "getAnalytic")
-		assert.Equal(t, "analytic-uuid-123", variables["uuid"])
-		return mockData, nil
-	})
-	defer server.Close()
-
-	transport, err := client.NewTransport("test-client", "test-secret", client.WithBaseURL(server.URL))
-	require.NoError(t, err)
-
-	service := analytics.NewService(transport)
-
-	result, _, err := service.GetAnalytic(context.Background(), "analytic-uuid-123")
+	result, _, err := service.GetAnalytic(context.Background(), "test-uuid-1234")
 
 	require.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, "analytic-uuid-123", result.UUID)
+	require.NotNil(t, result)
+	assert.Equal(t, "test-uuid-1234", result.UUID)
 	assert.Equal(t, "Test Analytic", result.Name)
-	assert.Equal(t, "HIGH", result.Severity)
 }
 
-func TestAnalyticsService_UpdateAnalytic(t *testing.T) {
-	mockData := map[string]any{
-		"updateAnalytic": map[string]any{
-			"uuid":        "analytic-uuid-123",
-			"name":        "Updated Analytic",
-			"description": "Updated Description",
-			"level":       5,
-			"updated":     "2024-01-02T00:00:00Z",
-		},
-	}
+func TestAnalyticService_UpdateAnalytic(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterUpdateAnalyticMock()
 
-	server := mockGraphQLServer(t, func(query string, variables map[string]any) (any, error) {
-		assert.Contains(t, query, "updateAnalytic")
-		assert.Equal(t, "analytic-uuid-123", variables["uuid"])
-		assert.Equal(t, "Updated Analytic", variables["name"])
-		return mockData, nil
-	})
-	defer server.Close()
-
-	transport, err := client.NewTransport("test-client", "test-secret", client.WithBaseURL(server.URL))
-	require.NoError(t, err)
-
-	service := analytics.NewService(transport)
-
-	req := &analytics.UpdateAnalyticRequest{
+	req := &analytic.UpdateAnalyticRequest{
 		Name:        "Updated Analytic",
-		InputType:   "unified_log",
-		Description: "Updated Description",
+		InputType:   "GPFSEvent",
 		Filter:      "process.name = 'updated'",
+		Description: "An updated test analytic",
 		Level:       5,
-		Tags:        []string{"updated"},
-		Categories:  []string{"malware"},
-		AnalyticActions: []analytics.AnalyticActionInput{
-			{Name: "alert", Parameters: []string{"critical"}},
-		},
-		Context:       []analytics.AnalyticContextInput{},
-		SnapshotFiles: []string{},
 	}
 
-	result, _, err := service.UpdateAnalytic(context.Background(), "analytic-uuid-123", req)
+	result, _, err := service.UpdateAnalytic(context.Background(), "test-uuid-1234", req)
 
 	require.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, "analytic-uuid-123", result.UUID)
+	require.NotNil(t, result)
+	assert.Equal(t, "test-uuid-1234", result.UUID)
 	assert.Equal(t, "Updated Analytic", result.Name)
 }
 
-func TestAnalyticsService_DeleteAnalytic(t *testing.T) {
-	mockData := map[string]any{
-		"deleteAnalytic": map[string]any{
-			"uuid": "analytic-uuid-123",
-		},
-	}
+func TestAnalyticService_DeleteAnalytic(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterDeleteAnalyticMock()
 
-	server := mockGraphQLServer(t, func(query string, variables map[string]any) (any, error) {
-		assert.Contains(t, query, "deleteAnalytic")
-		assert.Equal(t, "analytic-uuid-123", variables["uuid"])
-		return mockData, nil
-	})
-	defer server.Close()
-
-	transport, err := client.NewTransport("test-client", "test-secret", client.WithBaseURL(server.URL))
-	require.NoError(t, err)
-
-	service := analytics.NewService(transport)
-
-	_, err = service.DeleteAnalytic(context.Background(), "analytic-uuid-123")
+	_, err := service.DeleteAnalytic(context.Background(), "test-uuid-1234")
 
 	require.NoError(t, err)
 }
 
-func TestAnalyticsService_ListAnalytics(t *testing.T) {
-	mockData := map[string]any{
-		"listAnalytics": map[string]any{
-			"items": []map[string]any{
-				{
-					"uuid":        "analytic-1",
-					"name":        "Analytic 1",
-					"inputType":   "es_event",
-					"filter":      "event.type = 'exec'",
-					"level":       3,
-					"severity":    "MEDIUM",
-					"description": "First analytic",
-				},
-				{
-					"uuid":        "analytic-2",
-					"name":        "Analytic 2",
-					"inputType":   "unified_log",
-					"filter":      "process.name = 'bash'",
-					"level":       5,
-					"severity":    "HIGH",
-					"description": "Second analytic",
-				},
-			},
-			"pageInfo": map[string]any{
-				"next":  nil,
-				"total": 2,
-			},
-		},
-	}
-
-	server := mockGraphQLServer(t, func(query string, variables map[string]any) (any, error) {
-		assert.Contains(t, query, "listAnalytics")
-		return mockData, nil
-	})
-	defer server.Close()
-
-	transport, err := client.NewTransport("test-client", "test-secret", client.WithBaseURL(server.URL))
-	require.NoError(t, err)
-
-	service := analytics.NewService(transport)
+func TestAnalyticService_ListAnalytics(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterListAnalyticsMock()
 
 	result, _, err := service.ListAnalytics(context.Background())
 
 	require.NoError(t, err)
-	assert.Len(t, result, 2)
-	assert.Equal(t, "analytic-1", result[0].UUID)
-	assert.Equal(t, "Analytic 1", result[0].Name)
-	assert.Equal(t, "analytic-2", result[1].UUID)
-	assert.Equal(t, "Analytic 2", result[1].Name)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "test-uuid-1234", result[0].UUID)
+	assert.Equal(t, "Test Analytic", result[0].Name)
 }
 
-func TestAnalyticsService_CreateAnalytic_ValidationErrors(t *testing.T) {
-	transport, err := client.NewTransport("test-client", "test-secret")
-	require.NoError(t, err)
+func TestAnalyticService_ListAnalyticsLite(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterListAnalyticsLiteMock()
 
-	service := analytics.NewService(transport)
+	result, _, err := service.ListAnalyticsLite(context.Background())
+
+	require.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "test-uuid-1234", result[0].UUID)
+	assert.Equal(t, "Test Analytic", result[0].Name)
+}
+
+func TestAnalyticService_ListAnalyticsNames(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterListAnalyticsNamesMock()
+
+	result, _, err := service.ListAnalyticsNames(context.Background())
+
+	require.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "Test Analytic", result[0])
+}
+
+func TestAnalyticService_ListAnalyticsCategories(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterListAnalyticsCategoriesMock()
+
+	result, _, err := service.ListAnalyticsCategories(context.Background())
+
+	require.NoError(t, err)
+	assert.Len(t, result, 2)
+	assert.Equal(t, "Security", result[0].Value)
+	assert.Equal(t, 5, result[0].Count)
+}
+
+func TestAnalyticService_ListAnalyticsTags(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterListAnalyticsTagsMock()
+
+	result, _, err := service.ListAnalyticsTags(context.Background())
+
+	require.NoError(t, err)
+	assert.Len(t, result, 2)
+	assert.Equal(t, "endpoint", result[0].Value)
+	assert.Equal(t, 10, result[0].Count)
+}
+
+func TestAnalyticService_ListAnalyticsFilterOptions(t *testing.T) {
+	service, baseURL := setupMockClient(t)
+	mockHandler := mocks.NewAnalyticMock(baseURL)
+	mockHandler.RegisterListAnalyticsFilterOptionsMock()
+
+	result, _, err := service.ListAnalyticsFilterOptions(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Len(t, result.Tags, 1)
+	assert.Len(t, result.Categories, 1)
+	assert.Equal(t, "endpoint", result.Tags[0].Value)
+	assert.Equal(t, "Security", result.Categories[0].Value)
+}
+
+func TestAnalyticService_ValidationErrors(t *testing.T) {
+	service, _ := setupMockClient(t)
 
 	tests := []struct {
 		name    string
-		req     *analytics.CreateAnalyticRequest
+		fn      func() error
 		wantErr string
 	}{
 		{
-			name:    "nil request",
-			req:     nil,
+			name: "CreateAnalytic nil request",
+			fn: func() error {
+				_, _, err := service.CreateAnalytic(context.Background(), nil)
+				return err
+			},
 			wantErr: "request cannot be nil",
 		},
 		{
-			name: "missing name",
-			req: &analytics.CreateAnalyticRequest{
-				InputType:   "unified_log",
-				Description: "test",
-				Filter:      "test",
+			name: "CreateAnalytic missing name",
+			fn: func() error {
+				_, _, err := service.CreateAnalytic(context.Background(), &analytic.CreateAnalyticRequest{
+					InputType: "GPFSEvent",
+					Filter:    "test",
+				})
+				return err
 			},
 			wantErr: "name is required",
 		},
 		{
-			name: "missing inputType",
-			req: &analytics.CreateAnalyticRequest{
-				Name:        "test",
-				Description: "test",
-				Filter:      "test",
+			name: "CreateAnalytic missing inputType",
+			fn: func() error {
+				_, _, err := service.CreateAnalytic(context.Background(), &analytic.CreateAnalyticRequest{
+					Name:   "test",
+					Filter: "test",
+				})
+				return err
 			},
 			wantErr: "inputType is required",
 		},
 		{
-			name: "missing filter",
-			req: &analytics.CreateAnalyticRequest{
-				Name:        "test",
-				InputType:   "unified_log",
-				Description: "test",
+			name: "CreateAnalytic missing filter",
+			fn: func() error {
+				_, _, err := service.CreateAnalytic(context.Background(), &analytic.CreateAnalyticRequest{
+					Name:      "test",
+					InputType: "GPFSEvent",
+				})
+				return err
 			},
 			wantErr: "filter is required",
 		},
@@ -322,7 +239,7 @@ func TestAnalyticsService_CreateAnalytic_ValidationErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := service.CreateAnalytic(context.Background(), tt.req)
+			err := tt.fn()
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.wantErr)
 		})

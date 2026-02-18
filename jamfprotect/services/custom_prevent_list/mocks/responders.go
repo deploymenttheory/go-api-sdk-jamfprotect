@@ -2,12 +2,15 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
 
 // PreventListMock provides mock responses for the CustomPreventList service GraphQL operations.
-// All operations POST to the /app GraphQL endpoint and are distinguished by operation name
+// All operations POST to the /graphql endpoint and are distinguished by operation name
 // in the request body.
 type PreventListMock struct {
 	baseURL string
@@ -38,20 +41,11 @@ func (m *PreventListMock) RegisterErrorMocks() {
 func (m *PreventListMock) RegisterCreatePreventListMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("createPreventList"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createPreventList": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test Prevent List",
-						"description": "A test prevent list",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_prevent_list_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -61,20 +55,11 @@ func (m *PreventListMock) RegisterCreatePreventListMock() {
 func (m *PreventListMock) RegisterGetPreventListMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getPreventList"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getPreventList": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test Prevent List",
-						"description": "A test prevent list",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_prevent_list_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -84,20 +69,11 @@ func (m *PreventListMock) RegisterGetPreventListMock() {
 func (m *PreventListMock) RegisterUpdatePreventListMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("updatePreventList"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updatePreventList": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Updated Prevent List",
-						"description": "An updated prevent list",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_prevent_list_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -107,16 +83,11 @@ func (m *PreventListMock) RegisterUpdatePreventListMock() {
 func (m *PreventListMock) RegisterDeletePreventListMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("deletePreventList"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deletePreventList": map[string]any{
-						"id": "test-id-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_prevent_list_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -126,26 +97,11 @@ func (m *PreventListMock) RegisterDeletePreventListMock() {
 func (m *PreventListMock) RegisterListPreventListsMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listPreventLists"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listPreventLists": map[string]any{
-						"items": []map[string]any{
-							{
-								"id":          "test-id-1234",
-								"name":        "Test Prevent List",
-								"description": "A test prevent list",
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_prevent_lists_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -155,18 +111,11 @@ func (m *PreventListMock) RegisterListPreventListsMock() {
 func (m *PreventListMock) RegisterListPreventListNamesMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listPreventListNames"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listPreventListNames": map[string]any{
-						"items": []map[string]any{
-							{"name": "Test Prevent List"},
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_prevent_list_names_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -176,14 +125,11 @@ func (m *PreventListMock) RegisterListPreventListNamesMock() {
 func (m *PreventListMock) RegisterUnauthorizedErrorMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getPreventList"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -193,18 +139,26 @@ func (m *PreventListMock) RegisterUnauthorizedErrorMock() {
 func (m *PreventListMock) RegisterNotFoundErrorMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getPreventList"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getPreventList": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Prevent list not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *PreventListMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }

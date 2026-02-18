@@ -2,13 +2,15 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
 
 // ActionConfigMock provides mock responses for the ActionConfiguration service GraphQL operations.
-// All operations POST to the /app GraphQL endpoint and are distinguished by operation name
-// in the request body.
+// All operations POST to the /app endpoint and are distinguished by operation name in the request body.
 type ActionConfigMock struct {
 	baseURL string
 }
@@ -18,7 +20,7 @@ func NewActionConfigMock(baseURL string) *ActionConfigMock {
 	return &ActionConfigMock{baseURL: baseURL}
 }
 
-// RegisterMocks registers all successful response mocks for action configuration operations
+// RegisterMocks registers all successful response mocks for action config operations
 func (m *ActionConfigMock) RegisterMocks() {
 	m.RegisterCreateActionConfigMock()
 	m.RegisterGetActionConfigMock()
@@ -41,17 +43,8 @@ func (m *ActionConfigMock) RegisterCreateActionConfigMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("createActionConfigs"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createActionConfigs": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test Action Config",
-						"description": "A test action configuration",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_action_config_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -64,17 +57,8 @@ func (m *ActionConfigMock) RegisterGetActionConfigMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getActionConfigs"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getActionConfigs": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test Action Config",
-						"description": "A test action configuration",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_action_config_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -87,17 +71,8 @@ func (m *ActionConfigMock) RegisterUpdateActionConfigMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("updateActionConfigs"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updateActionConfigs": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Updated Action Config",
-						"description": "An updated action configuration",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_action_config_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -110,13 +85,8 @@ func (m *ActionConfigMock) RegisterDeleteActionConfigMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("deleteActionConfigs"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deleteActionConfigs": map[string]any{
-						"id": "test-id-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_action_config_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -129,25 +99,8 @@ func (m *ActionConfigMock) RegisterListActionConfigsMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listActionConfigs"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listActionConfigs": map[string]any{
-						"items": []map[string]any{
-							{
-								"id":          "test-id-1234",
-								"name":        "Test Action Config",
-								"description": "A test action configuration",
-								"created":     "2024-01-01T00:00:00Z",
-								"updated":     "2024-01-01T00:00:00Z",
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_action_configs_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -160,15 +113,8 @@ func (m *ActionConfigMock) RegisterListActionConfigNamesMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listActionConfigNames"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listActionConfigNames": map[string]any{
-						"items": []map[string]any{
-							{"name": "Test Action Config"},
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_action_config_names_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -181,11 +127,8 @@ func (m *ActionConfigMock) RegisterUnauthorizedErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getActionConfigs"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -198,15 +141,23 @@ func (m *ActionConfigMock) RegisterNotFoundErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getActionConfigs"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getActionConfigs": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Action configuration not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *ActionConfigMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }

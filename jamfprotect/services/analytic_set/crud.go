@@ -101,7 +101,7 @@ func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *Updat
 		UpdateAnalyticSet *AnalyticSet `json:"updateAnalyticSet"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, updateAnalyticSetMutation, vars, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, updateAnalyticSetMutation, vars, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update analytic set: %w", err)
 	}

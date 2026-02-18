@@ -2,13 +2,15 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
 
 // AnalyticSetMock provides mock responses for the AnalyticSet service GraphQL operations.
-// All operations POST to the /app GraphQL endpoint and are distinguished by operation name
-// in the request body.
+// Most operations POST to /app; updateAnalyticSet posts to /graphql.
 type AnalyticSetMock struct {
 	baseURL string
 }
@@ -40,18 +42,8 @@ func (m *AnalyticSetMock) RegisterCreateAnalyticSetMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("createAnalyticSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createAnalyticSet": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Analytic Set",
-						"description": "A test analytic set",
-						"managed":     false,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_analytic_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -64,18 +56,8 @@ func (m *AnalyticSetMock) RegisterGetAnalyticSetMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getAnalyticSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getAnalyticSet": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Analytic Set",
-						"description": "A test analytic set",
-						"managed":     false,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_analytic_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -85,21 +67,11 @@ func (m *AnalyticSetMock) RegisterGetAnalyticSetMock() {
 func (m *AnalyticSetMock) RegisterUpdateAnalyticSetMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("updateAnalyticSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updateAnalyticSet": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Updated Analytic Set",
-						"description": "An updated analytic set",
-						"managed":     false,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_analytic_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -112,13 +84,8 @@ func (m *AnalyticSetMock) RegisterDeleteAnalyticSetMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("deleteAnalyticSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deleteAnalyticSet": map[string]any{
-						"uuid": "test-uuid-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_analytic_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -131,24 +98,8 @@ func (m *AnalyticSetMock) RegisterListAnalyticSetsMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listAnalyticSets"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listAnalyticSets": map[string]any{
-						"items": []map[string]any{
-							{
-								"uuid":        "test-uuid-1234",
-								"name":        "Test Analytic Set",
-								"description": "A test analytic set",
-								"managed":     false,
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytic_sets_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -161,11 +112,8 @@ func (m *AnalyticSetMock) RegisterUnauthorizedErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getAnalyticSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -178,15 +126,23 @@ func (m *AnalyticSetMock) RegisterNotFoundErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getAnalyticSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getAnalyticSet": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Analytic set not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *AnalyticSetMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }

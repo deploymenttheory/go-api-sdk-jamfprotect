@@ -20,6 +20,15 @@ func NewService(client interfaces.GraphQLClient) *Service {
 
 // CreatePlan creates a new plan
 func (s *Service) CreatePlan(ctx context.Context, req *CreatePlanRequest) (*Plan, *interfaces.Response, error) {
+	if req == nil {
+		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
+	}
+	if req.Name == "" {
+		return nil, nil, fmt.Errorf("%w: name is required", client.ErrInvalidInput)
+	}
+	if req.ActionConfigs == "" {
+		return nil, nil, fmt.Errorf("%w: actionConfigs is required", client.ErrInvalidInput)
+	}
 	if err := ValidateCreatePlanRequest(req); err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}

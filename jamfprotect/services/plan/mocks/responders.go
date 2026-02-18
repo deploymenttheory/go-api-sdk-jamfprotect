@@ -2,6 +2,9 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
@@ -42,18 +45,8 @@ func (m *PlanMock) RegisterCreatePlanMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("createPlan"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createPlan": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test Plan",
-						"description": "A test plan",
-						"autoUpdate":  false,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_plan_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -66,18 +59,8 @@ func (m *PlanMock) RegisterGetPlanMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getPlan"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getPlan": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Test Plan",
-						"description": "A test plan",
-						"autoUpdate":  false,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_plan_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -90,18 +73,8 @@ func (m *PlanMock) RegisterUpdatePlanMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("updatePlan"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updatePlan": map[string]any{
-						"id":          "test-id-1234",
-						"name":        "Updated Plan",
-						"description": "An updated plan",
-						"autoUpdate":  false,
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_plan_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -114,13 +87,8 @@ func (m *PlanMock) RegisterDeletePlanMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("deletePlan"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deletePlan": map[string]any{
-						"id": "test-id-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_plan_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -133,24 +101,8 @@ func (m *PlanMock) RegisterListPlansMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listPlans"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listPlans": map[string]any{
-						"items": []map[string]any{
-							{
-								"id":          "test-id-1234",
-								"name":        "Test Plan",
-								"description": "A test plan",
-								"autoUpdate":  false,
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_plans_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -163,19 +115,8 @@ func (m *PlanMock) RegisterListPlanNamesMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listPlanNames"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listPlanNames": map[string]any{
-						"items": []map[string]any{
-							{"name": "Test Plan"},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_plan_names_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -188,45 +129,8 @@ func (m *PlanMock) RegisterGetPlanConfigurationAndSetOptionsMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getPlanConfigurationAndSetOptions"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"actionConfigs": map[string]any{
-						"items": []map[string]any{
-							{"id": "ac-id-1", "name": "Action Config 1"},
-						},
-					},
-					"telemetries": map[string]any{
-						"items": []map[string]any{
-							{"id": "tel-id-1", "name": "Telemetry 1"},
-						},
-					},
-					"telemetriesV2": map[string]any{
-						"items": []map[string]any{
-							{"id": "telv2-id-1", "name": "Telemetry V2 1"},
-						},
-					},
-					"usbControlSets": map[string]any{
-						"items": []map[string]any{
-							{"id": "usb-id-1", "name": "USB Control Set 1"},
-						},
-					},
-					"exceptionSets": map[string]any{
-						"items": []map[string]any{
-							{"uuid": "exc-uuid-1", "name": "Exception Set 1", "managed": false},
-						},
-					},
-					"analyticSets": map[string]any{
-						"items": []map[string]any{
-							{"uuid": "as-uuid-1", "name": "Analytic Set 1", "managed": false, "types": []string{}},
-						},
-					},
-					"managedAnalyticSets": map[string]any{
-						"items": []map[string]any{
-							{"uuid": "mas-uuid-1", "name": "Managed Analytic Set 1", "managed": true, "types": []string{}},
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_plan_configuration_and_set_options_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -239,11 +143,8 @@ func (m *PlanMock) RegisterUnauthorizedErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getPlan"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -256,15 +157,23 @@ func (m *PlanMock) RegisterNotFoundErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getPlan"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getPlan": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Plan not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *PlanMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }

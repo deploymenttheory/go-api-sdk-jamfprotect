@@ -1,0 +1,11 @@
+{
+  "data": {
+    "listUsbControlNames": {
+      "items": [
+        {
+          "name": "Test USB Control Set"
+        }
+      ]
+    }
+  }
+}

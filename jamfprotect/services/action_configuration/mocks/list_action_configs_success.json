@@ -1,0 +1,17 @@
+{
+  "data": {
+    "listActionConfigs": {
+      "items": [
+        {
+          "id": "test-id-1234",
+          "name": "Test Action Config",
+          "description": "A test action configuration"
+        }
+      ],
+      "pageInfo": {
+        "next": null,
+        "total": 1
+      }
+    }
+  }
+}

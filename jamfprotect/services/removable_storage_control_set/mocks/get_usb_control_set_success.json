@@ -1,0 +1,15 @@
+{
+  "data": {
+    "getUSBControlSet": {
+      "id": "test-id-1234",
+      "name": "Test USB Control Set",
+      "description": "A test USB control set",
+      "defaultMountAction": "ReadOnly",
+      "defaultMessageAction": "Notify",
+      "rules": [],
+      "plans": [],
+      "created": "2024-01-01T00:00:00Z",
+      "updated": "2024-01-01T00:00:00Z"
+    }
+  }
+}

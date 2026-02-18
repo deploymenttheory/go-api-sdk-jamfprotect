@@ -2,13 +2,16 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
 
 // AnalyticMock provides mock responses for the Analytic service GraphQL operations.
-// All operations POST to the /app GraphQL endpoint and are distinguished by operation name
-// in the request body.
+// Mutations (create/update/delete) POST to the /app endpoint; queries POST to the /graphql endpoint.
+// Operations are distinguished by operation name in the request body.
 type AnalyticMock struct {
 	baseURL string
 }
@@ -45,20 +48,8 @@ func (m *AnalyticMock) RegisterCreateAnalyticMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("createAnalytic"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createAnalytic": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Analytic",
-						"label":       "test_analytic",
-						"inputType":   "GPFSEvent",
-						"filter":      "",
-						"description": "A test analytic",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_analytic_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -68,23 +59,11 @@ func (m *AnalyticMock) RegisterCreateAnalyticMock() {
 func (m *AnalyticMock) RegisterGetAnalyticMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getAnalytic"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getAnalytic": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Analytic",
-						"label":       "test_analytic",
-						"inputType":   "GPFSEvent",
-						"filter":      "",
-						"description": "A test analytic",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_analytic_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -97,20 +76,8 @@ func (m *AnalyticMock) RegisterUpdateAnalyticMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("updateAnalytic"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updateAnalytic": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Updated Analytic",
-						"label":       "updated_analytic",
-						"inputType":   "GPFSEvent",
-						"filter":      "",
-						"description": "An updated test analytic",
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_analytic_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -123,13 +90,8 @@ func (m *AnalyticMock) RegisterDeleteAnalyticMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("deleteAnalytic"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deleteAnalytic": map[string]any{
-						"uuid": "test-uuid-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_analytic_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -139,60 +101,25 @@ func (m *AnalyticMock) RegisterDeleteAnalyticMock() {
 func (m *AnalyticMock) RegisterListAnalyticsMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listAnalytics"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listAnalytics": map[string]any{
-						"items": []map[string]any{
-							{
-								"uuid":        "test-uuid-1234",
-								"name":        "Test Analytic",
-								"label":       "test_analytic",
-								"inputType":   "GPFSEvent",
-								"description": "A test analytic",
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
 }
 
-// RegisterListAnalyticsLiteMock registers a success mock for listAnalyticsLite
+// RegisterListAnalyticsLiteMock registers a success mock for listAnalytics (lite query)
 func (m *AnalyticMock) RegisterListAnalyticsLiteMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listAnalyticsLite"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listAnalytics": map[string]any{
-						"items": []map[string]any{
-							{
-								"uuid":        "test-uuid-1234",
-								"name":        "Test Analytic",
-								"label":       "test_analytic",
-								"inputType":   "GPFSEvent",
-								"description": "A test analytic",
-								"tags":        []string{"security"},
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_lite_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -202,18 +129,11 @@ func (m *AnalyticMock) RegisterListAnalyticsLiteMock() {
 func (m *AnalyticMock) RegisterListAnalyticsNamesMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listAnalyticsNames"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listAnalyticsNames": map[string]any{
-						"items": []map[string]any{
-							{"name": "Test Analytic"},
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_names_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -223,17 +143,11 @@ func (m *AnalyticMock) RegisterListAnalyticsNamesMock() {
 func (m *AnalyticMock) RegisterListAnalyticsCategoriesMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listAnalyticsCategories"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listAnalyticsCategories": []map[string]any{
-						{"value": "Security", "count": 5},
-						{"value": "Network", "count": 3},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_categories_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -243,17 +157,11 @@ func (m *AnalyticMock) RegisterListAnalyticsCategoriesMock() {
 func (m *AnalyticMock) RegisterListAnalyticsTagsMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listAnalyticsTags"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listAnalyticsTags": []map[string]any{
-						{"value": "endpoint", "count": 10},
-						{"value": "network", "count": 7},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_tags_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -263,19 +171,11 @@ func (m *AnalyticMock) RegisterListAnalyticsTagsMock() {
 func (m *AnalyticMock) RegisterListAnalyticsFilterOptionsMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("listAnalyticsFilterOptions"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listAnalyticsTags": []map[string]any{
-						{"value": "endpoint", "count": 10},
-					},
-					"listAnalyticsCategories": []map[string]any{
-						{"value": "Security", "count": 5},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_analytics_filter_options_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -285,14 +185,11 @@ func (m *AnalyticMock) RegisterListAnalyticsFilterOptionsMock() {
 func (m *AnalyticMock) RegisterUnauthorizedErrorMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getAnalytic"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -302,18 +199,26 @@ func (m *AnalyticMock) RegisterUnauthorizedErrorMock() {
 func (m *AnalyticMock) RegisterNotFoundErrorMock() {
 	httpmock.RegisterMatcherResponder(
 		"POST",
-		m.baseURL+"/app",
+		m.baseURL+"/graphql",
 		httpmock.BodyContainsString("getAnalytic"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getAnalytic": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Analytic not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *AnalyticMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }

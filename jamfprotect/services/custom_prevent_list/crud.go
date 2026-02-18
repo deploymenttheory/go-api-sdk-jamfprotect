@@ -43,7 +43,7 @@ func (s *Service) CreatePreventList(ctx context.Context, req *CreatePreventListR
 		CreatePreventList *PreventList `json:"createPreventList"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, createPreventListMutation, vars, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, createPreventListMutation, vars, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to create prevent list: %w", err)
 	}
@@ -67,7 +67,7 @@ func (s *Service) GetPreventList(ctx context.Context, id string) (*PreventList, 
 		GetPreventList *PreventList `json:"getPreventList"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getPreventListQuery, vars, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, getPreventListQuery, vars, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get prevent list: %w", err)
 	}
@@ -104,7 +104,7 @@ func (s *Service) UpdatePreventList(ctx context.Context, id string, req *UpdateP
 		UpdatePreventList *PreventList `json:"updatePreventList"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, updatePreventListMutation, vars, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, updatePreventListMutation, vars, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to update prevent list: %w", err)
 	}
@@ -125,7 +125,7 @@ func (s *Service) DeletePreventList(ctx context.Context, id string) (*interfaces
 
 	vars := map[string]any{"id": id}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, deletePreventListMutation, vars, nil, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, deletePreventListMutation, vars, nil, headers)
 	if err != nil {
 		return resp, fmt.Errorf("failed to delete prevent list: %w", err)
 	}
@@ -157,7 +157,7 @@ func (s *Service) ListPreventLists(ctx context.Context) ([]PreventList, *interfa
 			ListPreventLists *ListPreventListsResponse `json:"listPreventLists"`
 		}
 
-		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listPreventListsQuery, vars, &result, headers)
+		resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listPreventListsQuery, vars, &result, headers)
 		lastResp = resp
 		if err != nil {
 			return nil, lastResp, fmt.Errorf("failed to list prevent lists: %w", err)
@@ -224,7 +224,7 @@ func (s *Service) ListPreventListNames(ctx context.Context) ([]string, *interfac
 		ListPreventListNames *ListPreventListNamesResponse `json:"listPreventListNames"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listPreventListNamesQuery, nil, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listPreventListNamesQuery, nil, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list prevent list names: %w", err)
 	}

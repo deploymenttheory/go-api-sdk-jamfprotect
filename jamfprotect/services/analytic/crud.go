@@ -20,6 +20,18 @@ func NewService(client interfaces.GraphQLClient) *Service {
 
 // CreateAnalytic creates a new analytic
 func (s *Service) CreateAnalytic(ctx context.Context, req *CreateAnalyticRequest) (*Analytic, *interfaces.Response, error) {
+	if req == nil {
+		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
+	}
+	if req.Name == "" {
+		return nil, nil, fmt.Errorf("%w: name is required", client.ErrInvalidInput)
+	}
+	if req.InputType == "" {
+		return nil, nil, fmt.Errorf("%w: inputType is required", client.ErrInvalidInput)
+	}
+	if req.Filter == "" {
+		return nil, nil, fmt.Errorf("%w: filter is required", client.ErrInvalidInput)
+	}
 	if err := ValidateCreateAnalyticRequest(req); err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
@@ -58,7 +70,7 @@ func (s *Service) GetAnalytic(ctx context.Context, uuid string) (*Analytic, *int
 		GetAnalytic *Analytic `json:"getAnalytic"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getAnalyticQuery, vars, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, getAnalyticQuery, vars, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to get analytic: %w", err)
 	}
@@ -126,7 +138,7 @@ func (s *Service) ListAnalytics(ctx context.Context) ([]Analytic, *interfaces.Re
 		ListAnalytics *ListAnalyticsResponse `json:"listAnalytics"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listAnalyticsQuery, nil, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listAnalyticsQuery, nil, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list analytics: %w", err)
 	}
@@ -149,7 +161,7 @@ func (s *Service) ListAnalyticsLite(ctx context.Context) ([]AnalyticLite, *inter
 		ListAnalytics *ListAnalyticsLiteResponse `json:"listAnalytics"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listAnalyticsLiteQuery, nil, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listAnalyticsLiteQuery, nil, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list analytics lite: %w", err)
 	}
@@ -176,7 +188,7 @@ func (s *Service) ListAnalyticsNames(ctx context.Context) ([]string, *interfaces
 		} `json:"listAnalyticsNames"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listAnalyticsNamesQuery, nil, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listAnalyticsNamesQuery, nil, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list analytics names: %w", err)
 	}
@@ -202,7 +214,7 @@ func (s *Service) ListAnalyticsCategories(ctx context.Context) ([]AnalyticCatego
 		ListAnalyticsCategories []AnalyticCategory `json:"listAnalyticsCategories"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listAnalyticsCategoriesQuery, nil, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listAnalyticsCategoriesQuery, nil, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list analytics categories: %w", err)
 	}
@@ -225,7 +237,7 @@ func (s *Service) ListAnalyticsTags(ctx context.Context) ([]AnalyticTag, *interf
 		ListAnalyticsTags []AnalyticTag `json:"listAnalyticsTags"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listAnalyticsTagsQuery, nil, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listAnalyticsTagsQuery, nil, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list analytics tags: %w", err)
 	}
@@ -249,7 +261,7 @@ func (s *Service) ListAnalyticsFilterOptions(ctx context.Context) (*AnalyticsFil
 		ListAnalyticsCategories []AnalyticCategory `json:"listAnalyticsCategories"`
 	}
 
-	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listAnalyticsFilterOptionsQuery, nil, &result, headers)
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listAnalyticsFilterOptionsQuery, nil, &result, headers)
 	if err != nil {
 		return nil, resp, fmt.Errorf("failed to list analytics filter options: %w", err)
 	}

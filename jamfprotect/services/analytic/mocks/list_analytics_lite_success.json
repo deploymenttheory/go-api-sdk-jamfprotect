@@ -1,0 +1,1 @@
+{"data":{"listAnalytics":{"items":[{"uuid":"test-uuid-1234","name":"Test Analytic","label":"test_analytic","inputType":"GPFSEvent","description":"A test analytic","tags":["security"]}],"pageInfo":{"next":null,"total":1}}}}

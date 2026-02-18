@@ -2,13 +2,15 @@ package mocks
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/jarcoal/httpmock"
 )
 
 // ExceptionSetMock provides mock responses for the ExceptionSet service GraphQL operations.
-// All operations POST to the /app GraphQL endpoint and are distinguished by operation name
-// in the request body.
+// All operations POST to the /app endpoint and are distinguished by operation name in the request body.
 type ExceptionSetMock struct {
 	baseURL string
 }
@@ -41,19 +43,8 @@ func (m *ExceptionSetMock) RegisterCreateExceptionSetMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("createExceptionSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"createExceptionSet": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Exception Set",
-						"description": "A test exception set",
-						"managed":     false,
-						"exceptions":  []any{},
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("create_exception_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -66,19 +57,8 @@ func (m *ExceptionSetMock) RegisterGetExceptionSetMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getExceptionSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getExceptionSet": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Test Exception Set",
-						"description": "A test exception set",
-						"managed":     false,
-						"exceptions":  []any{},
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-01T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("get_exception_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -91,19 +71,8 @@ func (m *ExceptionSetMock) RegisterUpdateExceptionSetMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("updateExceptionSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"updateExceptionSet": map[string]any{
-						"uuid":        "test-uuid-1234",
-						"name":        "Updated Exception Set",
-						"description": "An updated exception set",
-						"managed":     false,
-						"exceptions":  []any{},
-						"created":     "2024-01-01T00:00:00Z",
-						"updated":     "2024-01-02T00:00:00Z",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("update_exception_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -116,13 +85,8 @@ func (m *ExceptionSetMock) RegisterDeleteExceptionSetMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("deleteExceptionSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"deleteExceptionSet": map[string]any{
-						"uuid": "test-uuid-1234",
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("delete_exception_set_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -135,23 +99,8 @@ func (m *ExceptionSetMock) RegisterListExceptionSetsMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listExceptionSets"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listExceptionSets": map[string]any{
-						"items": []map[string]any{
-							{
-								"uuid":    "test-uuid-1234",
-								"name":    "Test Exception Set",
-								"managed": false,
-							},
-						},
-						"pageInfo": map[string]any{
-							"next":  nil,
-							"total": 1,
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_exception_sets_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -164,15 +113,8 @@ func (m *ExceptionSetMock) RegisterListExceptionSetNamesMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("listExceptionSetNames"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"listExceptionSetNames": map[string]any{
-						"items": []map[string]any{
-							{"name": "Test Exception Set"},
-						},
-					},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("list_exception_set_names_success.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -185,11 +127,8 @@ func (m *ExceptionSetMock) RegisterUnauthorizedErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getExceptionSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(401, map[string]any{
-				"errors": []map[string]any{
-					{"message": "Unauthorized"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(401, m.loadMockData("error_unauthorized.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
@@ -202,15 +141,23 @@ func (m *ExceptionSetMock) RegisterNotFoundErrorMock() {
 		m.baseURL+"/app",
 		httpmock.BodyContainsString("getExceptionSet"),
 		func(req *http.Request) (*http.Response, error) {
-			resp, _ := httpmock.NewJsonResponse(200, map[string]any{
-				"data": map[string]any{
-					"getExceptionSet": nil,
-				},
-				"errors": []map[string]any{
-					{"message": "Exception set not found"},
-				},
-			})
+			resp := httpmock.NewBytesResponse(200, m.loadMockData("error_not_found.json"))
+			resp.Header.Set("Content-Type", "application/json")
 			return resp, nil
 		},
 	)
+}
+
+// loadMockData loads mock JSON data from a file relative to this source file
+func (m *ExceptionSetMock) loadMockData(filename string) []byte {
+	_, currentFile, _, _ := runtime.Caller(0)
+	mockDir := filepath.Dir(currentFile)
+	mockFile := filepath.Join(mockDir, filename)
+
+	data, err := os.ReadFile(mockFile)
+	if err != nil {
+		panic("Failed to load mock data: " + err.Error())
+	}
+
+	return data
 }
