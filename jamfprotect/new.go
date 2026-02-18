@@ -1,6 +1,7 @@
 package jamfprotect
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -121,4 +122,29 @@ func (c *Client) GetLogger() *zap.Logger {
 //   - *client.Transport: The transport instance
 func (c *Client) GetTransport() *client.Transport {
 	return c.transport
+}
+
+// GetTokenManager returns the token manager for advanced token lifecycle operations.
+//
+// Returns:
+//   - *client.TokenManager: The token manager instance
+func (c *Client) GetTokenManager() *client.TokenManager {
+	return c.transport.GetTokenManager()
+}
+
+// RefreshToken manually refreshes the OAuth2 access token.
+// Useful when you need to explicitly force a token refresh ahead of expiry.
+//
+// Parameters:
+//   - ctx: Request context
+//
+// Returns:
+//   - error: Any error encountered during token refresh
+func (c *Client) RefreshToken(ctx context.Context) error {
+	return c.transport.RefreshToken(ctx)
+}
+
+// InvalidateToken invalidates the current cached token, forcing a refresh on next use.
+func (c *Client) InvalidateToken() {
+	c.transport.InvalidateToken()
 }

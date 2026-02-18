@@ -141,3 +141,56 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// PlanName is a lightweight plan containing only the name
+type PlanName struct {
+	Name string `json:"name"`
+}
+
+// ListPlanNamesResponse is the response wrapper for listing plan names
+type ListPlanNamesResponse struct {
+	Items    []PlanName `json:"items"`
+	PageInfo PageInfo   `json:"pageInfo"`
+}
+
+// GetPlanConfigurationAndSetOptionsRequest holds RBAC flags for the plan configuration query
+type GetPlanConfigurationAndSetOptionsRequest struct {
+	RBACActionConfigs bool
+	RBACTelemetry     bool
+	RBACUSBControlSet bool
+	RBACExceptionSet  bool
+	RBACAnalyticSet   bool
+}
+
+// PlanConfigRefItem is a lightweight reference item returned by plan configuration queries
+type PlanConfigRefItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// PlanConfigExceptionSetItem is an exception set reference in plan configuration
+type PlanConfigExceptionSetItem struct {
+	Name    string `json:"name"`
+	UUID    string `json:"uuid"`
+	Managed bool   `json:"managed"`
+}
+
+// PlanConfigAnalyticSetItem is an analytic set reference in plan configuration
+type PlanConfigAnalyticSetItem struct {
+	Name        string   `json:"name"`
+	UUID        string   `json:"uuid"`
+	Description string   `json:"description"`
+	Managed     bool     `json:"managed"`
+	Types       []string `json:"types"`
+}
+
+// PlanConfigurationAndSetOptions is the combined response for plan configuration options
+type PlanConfigurationAndSetOptions struct {
+	ActionConfigs       []PlanConfigRefItem          `json:"actionConfigs"`
+	Telemetries         []PlanConfigRefItem          `json:"telemetries"`
+	TelemetriesV2       []PlanConfigRefItem          `json:"telemetriesV2"`
+	USBControlSets      []PlanConfigRefItem          `json:"usbControlSets"`
+	ExceptionSets       []PlanConfigExceptionSetItem `json:"exceptionSets"`
+	AnalyticSets        []PlanConfigAnalyticSetItem  `json:"analyticSets"`
+	ManagedAnalyticSets []PlanConfigAnalyticSetItem  `json:"managedAnalyticSets"`
+}

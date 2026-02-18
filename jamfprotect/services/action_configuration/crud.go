@@ -202,3 +202,29 @@ func buildActionConfigVariables(req any) map[string]any {
 
 	return vars
 }
+
+// ListActionConfigNames retrieves only the names of all action configurations
+func (s *Service) ListActionConfigNames(ctx context.Context) ([]string, *interfaces.Response, error) {
+	headers := map[string]string{
+		"Accept":       client.AcceptJSON,
+		"Content-Type": client.ContentTypeJSON,
+	}
+
+	var result struct {
+		ListActionConfigNames *ListActionConfigNamesResponse `json:"listActionConfigNames"`
+	}
+
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listActionConfigNamesQuery, nil, &result, headers)
+	if err != nil {
+		return nil, resp, fmt.Errorf("failed to list action config names: %w", err)
+	}
+
+	names := []string{}
+	if result.ListActionConfigNames != nil {
+		for _, item := range result.ListActionConfigNames.Items {
+			names = append(names, item.Name)
+		}
+	}
+
+	return names, resp, nil
+}

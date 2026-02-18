@@ -121,3 +121,13 @@ query listActionConfigs($nextToken: String, $direction: OrderDirection!, $field:
 	}
 }
 `
+
+const listActionConfigNamesQuery = `
+query listActionConfigNames {
+	listActionConfigNames: listActionConfigs {
+		items {
+			name
+		}
+	}
+}
+`

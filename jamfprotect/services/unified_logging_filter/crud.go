@@ -205,3 +205,29 @@ func buildUnifiedLoggingFilterVariables(req any) map[string]any {
 		"enabled":     enabled,
 	}
 }
+
+// ListUnifiedLoggingFilterNames retrieves only the names of all unified logging filters
+func (s *Service) ListUnifiedLoggingFilterNames(ctx context.Context) ([]string, *interfaces.Response, error) {
+	headers := map[string]string{
+		"Accept":       client.AcceptJSON,
+		"Content-Type": client.ContentTypeJSON,
+	}
+
+	var result struct {
+		ListUnifiedLoggingFilterNames *ListUnifiedLoggingFilterNamesResponse `json:"listUnifiedLoggingFilterNames"`
+	}
+
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointGraphQL, listUnifiedLoggingFilterNamesQuery, nil, &result, headers)
+	if err != nil {
+		return nil, resp, fmt.Errorf("failed to list unified logging filter names: %w", err)
+	}
+
+	names := []string{}
+	if result.ListUnifiedLoggingFilterNames != nil {
+		for _, item := range result.ListUnifiedLoggingFilterNames.Items {
+			names = append(names, item.Name)
+		}
+	}
+
+	return names, resp, nil
+}

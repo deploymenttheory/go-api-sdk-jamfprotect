@@ -87,3 +87,13 @@ query listPreventLists($nextToken: String, $direction: OrderDirection!, $field: 
 	}
 }
 ` + preventListFields
+
+const listPreventListNamesQuery = `
+query listPreventListNames {
+	listPreventListNames: listPreventLists {
+		items {
+			name
+		}
+	}
+}
+`

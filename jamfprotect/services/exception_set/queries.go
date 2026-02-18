@@ -117,3 +117,13 @@ query listExceptionSets($nextToken: String, $direction: OrderDirection = DESC, $
 	}
 }
 `
+
+const listExceptionSetNamesQuery = `
+query listExceptionSetNames {
+	listExceptionSetNames: listExceptionSets {
+		items {
+			name
+		}
+	}
+}
+`

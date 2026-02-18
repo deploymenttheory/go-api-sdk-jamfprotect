@@ -41,3 +41,13 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// UnifiedLoggingFilterName is a lightweight filter containing only the name
+type UnifiedLoggingFilterName struct {
+	Name string `json:"name"`
+}
+
+// ListUnifiedLoggingFilterNamesResponse is the response wrapper for listing filter names
+type ListUnifiedLoggingFilterNamesResponse struct {
+	Items []UnifiedLoggingFilterName `json:"items"`
+}

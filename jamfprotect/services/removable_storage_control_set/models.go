@@ -91,3 +91,13 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// USBControlSetName is a lightweight USB control set containing only the name
+type USBControlSetName struct {
+	Name string `json:"name"`
+}
+
+// ListUSBControlSetNamesResponse is the response wrapper for listing USB control set names
+type ListUSBControlSetNamesResponse struct {
+	Items []USBControlSetName `json:"items"`
+}

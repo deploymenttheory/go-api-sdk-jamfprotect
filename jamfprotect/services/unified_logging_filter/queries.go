@@ -80,3 +80,13 @@ query listUnifiedLoggingFilters($nextToken: String, $direction: OrderDirection!,
 	}
 }
 ` + unifiedLoggingFilterFields
+
+const listUnifiedLoggingFilterNamesQuery = `
+query listUnifiedLoggingFilterNames {
+	listUnifiedLoggingFilterNames: listUnifiedLoggingFilters {
+		items {
+			name
+		}
+	}
+}
+`

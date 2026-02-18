@@ -218,3 +218,42 @@ func buildTelemetryV2Variables(req any) map[string]any {
 		"fileHashing":        fileHashing,
 	}
 }
+
+// ListTelemetriesCombined retrieves both v1 and v2 telemetries in a single query.
+// The RBAC_Plan flag controls whether plan associations are included in the response.
+func (s *Service) ListTelemetriesCombined(ctx context.Context, includePlans bool) (*TelemetriesCombinedResponse, *interfaces.Response, error) {
+	headers := map[string]string{
+		"Accept":       client.AcceptJSON,
+		"Content-Type": client.ContentTypeJSON,
+	}
+
+	vars := map[string]any{
+		"field":     "created",
+		"direction": "ASC",
+		"RBAC_Plan": includePlans,
+	}
+
+	var result struct {
+		ListTelemetries *struct {
+			Items []TelemetryV1 `json:"items"`
+		} `json:"listTelemetries"`
+		ListTelemetriesV2 *struct {
+			Items []TelemetryV2 `json:"items"`
+		} `json:"listTelemetriesV2"`
+	}
+
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listTelemetriesCombinedQuery, vars, &result, headers)
+	if err != nil {
+		return nil, resp, fmt.Errorf("failed to list combined telemetries: %w", err)
+	}
+
+	combined := &TelemetriesCombinedResponse{}
+	if result.ListTelemetries != nil {
+		combined.Telemetries = result.ListTelemetries.Items
+	}
+	if result.ListTelemetriesV2 != nil {
+		combined.TelemetriesV2 = result.ListTelemetriesV2.Items
+	}
+
+	return combined, resp, nil
+}

@@ -212,3 +212,29 @@ func preventListMutationVariables(req any) map[string]any {
 
 	return vars
 }
+
+// ListPreventListNames retrieves only the names of all custom prevent lists
+func (s *Service) ListPreventListNames(ctx context.Context) ([]string, *interfaces.Response, error) {
+	headers := map[string]string{
+		"Accept":       client.AcceptJSON,
+		"Content-Type": client.ContentTypeJSON,
+	}
+
+	var result struct {
+		ListPreventListNames *ListPreventListNamesResponse `json:"listPreventListNames"`
+	}
+
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listPreventListNamesQuery, nil, &result, headers)
+	if err != nil {
+		return nil, resp, fmt.Errorf("failed to list prevent list names: %w", err)
+	}
+
+	names := []string{}
+	if result.ListPreventListNames != nil {
+		for _, item := range result.ListPreventListNames.Items {
+			names = append(names, item.Name)
+		}
+	}
+
+	return names, resp, nil
+}

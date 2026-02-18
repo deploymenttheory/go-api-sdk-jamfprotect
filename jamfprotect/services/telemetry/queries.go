@@ -92,3 +92,61 @@ query listTelemetriesV2($nextToken: String, $direction: OrderDirection!, $field:
 	}
 }
 ` + telemetryV2Fields
+
+const telemetryV1Fields = `
+fragment TelemetryFields on Telemetry {
+	id
+	name
+	description
+	verbose
+	level
+	created
+	updated
+	plans @include(if: $RBAC_Plan) {
+		id
+		name
+	}
+	performanceMetrics
+	logFiles
+	logFileCollection
+}
+`
+
+const listTelemetriesCombinedQuery = `
+query listTelemetriesCombined(
+	$field: TelemetryOrderField!
+	$direction: OrderDirection!
+	$RBAC_Plan: Boolean!
+) {
+	listTelemetries(
+		input: { order: { direction: $direction, field: $field }, pageSize: 100 }
+	) {
+		items {
+			...TelemetryFields
+		}
+		pageInfo {
+			next
+			total
+		}
+	}
+	listTelemetriesV2(
+		input: { order: { direction: $direction, field: $field }, pageSize: 100 }
+	) {
+		items {
+			id
+			name
+			description
+			plans @include(if: $RBAC_Plan) {
+				id
+				name
+			}
+			created
+			updated
+		}
+		pageInfo {
+			next
+			total
+		}
+	}
+}
+` + telemetryV1Fields

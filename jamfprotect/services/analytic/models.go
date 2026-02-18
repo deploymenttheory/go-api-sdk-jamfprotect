@@ -94,3 +94,39 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// AnalyticLite is a lightweight analytic summary used for listing and selection
+type AnalyticLite struct {
+	UUID            string   `json:"uuid"`
+	Name            string   `json:"name"`
+	Label           string   `json:"label"`
+	InputType       string   `json:"inputType"`
+	Description     string   `json:"description"`
+	LongDescription string   `json:"longDescription"`
+	Tags            []string `json:"tags"`
+	Remediation     string   `json:"remediation"`
+}
+
+// AnalyticCategory represents an analytics category with a count
+type AnalyticCategory struct {
+	Value string `json:"value"`
+	Count int    `json:"count"`
+}
+
+// AnalyticTag represents an analytics tag with a count
+type AnalyticTag struct {
+	Value string `json:"value"`
+	Count int    `json:"count"`
+}
+
+// AnalyticsFilterOptions combines tags and categories for filter UIs
+type AnalyticsFilterOptions struct {
+	Tags       []AnalyticTag      `json:"tags"`
+	Categories []AnalyticCategory `json:"categories"`
+}
+
+// ListAnalyticsLiteResponse is the response wrapper for listing analytics lite
+type ListAnalyticsLiteResponse struct {
+	Items    []AnalyticLite `json:"items"`
+	PageInfo PageInfo       `json:"pageInfo"`
+}

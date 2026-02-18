@@ -163,3 +163,96 @@ query listPlans($nextToken: String, $direction: OrderDirection!, $field: PlanOrd
 	}
 }
 ` + planFields
+
+const listPlanNamesQuery = `
+query listPlanNames($nextToken: String) {
+	listPlanNames: listPlans(input: { next: $nextToken }) {
+		items {
+			name
+		}
+		pageInfo {
+			next
+			total
+		}
+	}
+}
+`
+
+const getPlanConfigurationAndSetOptionsQuery = `
+query getPlanConfigurationAndSetOptions(
+	$RBAC_ActionConfigs: Boolean!
+	$RBAC_Telemetry: Boolean!
+	$RBAC_USBControlSet: Boolean!
+	$RBAC_ExceptionSet: Boolean!
+	$RBAC_AnalyticSet: Boolean!
+) {
+	actionConfigs: listActionConfigs(
+		input: { order: { direction: DESC, field: created } }
+	) @include(if: $RBAC_ActionConfigs) {
+		items {
+			name
+			id
+		}
+	}
+	telemetries: listTelemetries(
+		input: { order: { direction: DESC, field: created } }
+	) @include(if: $RBAC_Telemetry) {
+		items {
+			name
+			id
+		}
+	}
+	telemetriesV2: listTelemetriesV2(
+		input: { order: { direction: DESC, field: created } }
+	) @include(if: $RBAC_Telemetry) {
+		items {
+			name
+			id
+		}
+	}
+	usbControlSets: listUSBControlSets(
+		input: { order: { direction: DESC, field: created } }
+	) @include(if: $RBAC_USBControlSet) {
+		items {
+			name
+			id
+		}
+	}
+	exceptionSets: listExceptionSets(
+		input: { order: { direction: DESC, field: created } }
+	) @include(if: $RBAC_ExceptionSet) {
+		items {
+			name
+			uuid
+			managed
+		}
+	}
+	analyticSets: listAnalyticSets(
+		input: {
+			order: { direction: DESC, field: created }
+			filter: { managed: { equals: false } }
+		}
+	) @include(if: $RBAC_AnalyticSet) {
+		items {
+			name
+			uuid
+			managed
+			types
+		}
+	}
+	managedAnalyticSets: listAnalyticSets(
+		input: {
+			order: { direction: DESC, field: created }
+			filter: { managed: { equals: true } }
+		}
+	) @include(if: $RBAC_AnalyticSet) {
+		items {
+			name
+			description
+			uuid
+			managed
+			types
+		}
+	}
+}
+`

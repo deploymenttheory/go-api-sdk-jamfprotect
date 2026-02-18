@@ -136,3 +136,65 @@ query listAnalytics {
 	}
 }
 ` + analyticFields
+
+const listAnalyticsLiteQuery = `
+query listAnalyticsLite {
+	listAnalytics {
+		items {
+			name
+			label
+			uuid
+			longDescription
+			description
+			tags
+			inputType
+			remediation
+		}
+		pageInfo {
+			next
+			total
+		}
+	}
+}
+`
+
+const listAnalyticsNamesQuery = `
+query listAnalyticsNames {
+	listAnalyticsNames: listAnalytics {
+		items {
+			name
+		}
+	}
+}
+`
+
+const listAnalyticsCategoriesQuery = `
+query listAnalyticsCategories {
+	listAnalyticsCategories {
+		value
+		count
+	}
+}
+`
+
+const listAnalyticsTagsQuery = `
+query listAnalyticsTags {
+	listAnalyticsTags {
+		value
+		count
+	}
+}
+`
+
+const listAnalyticsFilterOptionsQuery = `
+query listAnalyticsFilterOptions {
+	listAnalyticsTags {
+		value
+		count
+	}
+	listAnalyticsCategories {
+		value
+		count
+	}
+}
+`

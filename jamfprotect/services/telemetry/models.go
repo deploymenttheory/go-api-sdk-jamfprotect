@@ -54,3 +54,24 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// TelemetryV1 represents a legacy (v1) telemetry configuration
+type TelemetryV1 struct {
+	ID                 string            `json:"id"`
+	Name               string            `json:"name"`
+	Description        string            `json:"description"`
+	Verbose            bool              `json:"verbose"`
+	Level              int               `json:"level"`
+	Created            string            `json:"created"`
+	Updated            string            `json:"updated"`
+	Plans              []TelemetryV2Plan `json:"plans"`
+	PerformanceMetrics bool              `json:"performanceMetrics"`
+	LogFiles           []string          `json:"logFiles"`
+	LogFileCollection  bool              `json:"logFileCollection"`
+}
+
+// TelemetriesCombinedResponse holds both v1 and v2 telemetries in a single response
+type TelemetriesCombinedResponse struct {
+	Telemetries   []TelemetryV1 `json:"telemetries"`
+	TelemetriesV2 []TelemetryV2 `json:"telemetriesV2"`
+}

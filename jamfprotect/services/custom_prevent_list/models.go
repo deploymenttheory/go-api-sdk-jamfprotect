@@ -41,3 +41,13 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// PreventListName is a lightweight prevent list containing only the name
+type PreventListName struct {
+	Name string `json:"name"`
+}
+
+// ListPreventListNamesResponse is the response wrapper for listing prevent list names
+type ListPreventListNamesResponse struct {
+	Items []PreventListName `json:"items"`
+}

@@ -107,3 +107,13 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// ExceptionSetName is a lightweight exception set containing only the name
+type ExceptionSetName struct {
+	Name string `json:"name"`
+}
+
+// ListExceptionSetNamesResponse is the response wrapper for listing exception set names
+type ListExceptionSetNamesResponse struct {
+	Items []ExceptionSetName `json:"items"`
+}

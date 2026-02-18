@@ -159,6 +159,126 @@ func (s *Service) ListPlans(ctx context.Context) ([]Plan, *interfaces.Response, 
 	return allItems, lastResp, nil
 }
 
+// ListPlanNames retrieves only the names of all plans with automatic pagination
+func (s *Service) ListPlanNames(ctx context.Context) ([]string, *interfaces.Response, error) {
+	headers := map[string]string{
+		"Accept":       client.AcceptJSON,
+		"Content-Type": client.ContentTypeJSON,
+	}
+
+	allNames := make([]string, 0)
+	var nextToken *string
+	var lastResp *interfaces.Response
+
+	for {
+		vars := map[string]any{}
+		if nextToken != nil {
+			vars["nextToken"] = *nextToken
+		}
+
+		var result struct {
+			ListPlanNames *ListPlanNamesResponse `json:"listPlanNames"`
+		}
+
+		resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listPlanNamesQuery, vars, &result, headers)
+		lastResp = resp
+		if err != nil {
+			return nil, lastResp, fmt.Errorf("failed to list plan names: %w", err)
+		}
+
+		if result.ListPlanNames != nil {
+			for _, item := range result.ListPlanNames.Items {
+				allNames = append(allNames, item.Name)
+			}
+			if result.ListPlanNames.PageInfo.Next == nil {
+				break
+			}
+			nextToken = result.ListPlanNames.PageInfo.Next
+		} else {
+			break
+		}
+	}
+
+	return allNames, lastResp, nil
+}
+
+// GetPlanConfigurationAndSetOptions retrieves all resources available for plan configuration,
+// gated by RBAC flags. Returns action configs, telemetries (v1 and v2), USB control sets,
+// exception sets, and both managed and unmanaged analytic sets.
+func (s *Service) GetPlanConfigurationAndSetOptions(ctx context.Context, req *GetPlanConfigurationAndSetOptionsRequest) (*PlanConfigurationAndSetOptions, *interfaces.Response, error) {
+	if req == nil {
+		return nil, nil, fmt.Errorf("%w: request is required", client.ErrInvalidInput)
+	}
+
+	headers := map[string]string{
+		"Accept":       client.AcceptJSON,
+		"Content-Type": client.ContentTypeJSON,
+	}
+
+	vars := map[string]any{
+		"RBAC_ActionConfigs": req.RBACActionConfigs,
+		"RBAC_Telemetry":     req.RBACTelemetry,
+		"RBAC_USBControlSet": req.RBACUSBControlSet,
+		"RBAC_ExceptionSet":  req.RBACExceptionSet,
+		"RBAC_AnalyticSet":   req.RBACAnalyticSet,
+	}
+
+	var result struct {
+		ActionConfigs  *struct {
+			Items []PlanConfigRefItem `json:"items"`
+		} `json:"actionConfigs"`
+		Telemetries *struct {
+			Items []PlanConfigRefItem `json:"items"`
+		} `json:"telemetries"`
+		TelemetriesV2 *struct {
+			Items []PlanConfigRefItem `json:"items"`
+		} `json:"telemetriesV2"`
+		USBControlSets *struct {
+			Items []PlanConfigRefItem `json:"items"`
+		} `json:"usbControlSets"`
+		ExceptionSets *struct {
+			Items []PlanConfigExceptionSetItem `json:"items"`
+		} `json:"exceptionSets"`
+		AnalyticSets *struct {
+			Items []PlanConfigAnalyticSetItem `json:"items"`
+		} `json:"analyticSets"`
+		ManagedAnalyticSets *struct {
+			Items []PlanConfigAnalyticSetItem `json:"items"`
+		} `json:"managedAnalyticSets"`
+	}
+
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, getPlanConfigurationAndSetOptionsQuery, vars, &result, headers)
+	if err != nil {
+		return nil, resp, fmt.Errorf("failed to get plan configuration and set options: %w", err)
+	}
+
+	opts := &PlanConfigurationAndSetOptions{}
+
+	if result.ActionConfigs != nil {
+		opts.ActionConfigs = result.ActionConfigs.Items
+	}
+	if result.Telemetries != nil {
+		opts.Telemetries = result.Telemetries.Items
+	}
+	if result.TelemetriesV2 != nil {
+		opts.TelemetriesV2 = result.TelemetriesV2.Items
+	}
+	if result.USBControlSets != nil {
+		opts.USBControlSets = result.USBControlSets.Items
+	}
+	if result.ExceptionSets != nil {
+		opts.ExceptionSets = result.ExceptionSets.Items
+	}
+	if result.AnalyticSets != nil {
+		opts.AnalyticSets = result.AnalyticSets.Items
+	}
+	if result.ManagedAnalyticSets != nil {
+		opts.ManagedAnalyticSets = result.ManagedAnalyticSets.Items
+	}
+
+	return opts, resp, nil
+}
+
 // planMutationVariables returns GraphQL variables for createPlan/updatePlan mutations.
 func planMutationVariables(req any) map[string]any {
 	var (

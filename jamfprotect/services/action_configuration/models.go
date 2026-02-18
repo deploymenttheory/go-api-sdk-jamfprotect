@@ -120,3 +120,13 @@ type PageInfo struct {
 	Next  *string `json:"next"`
 	Total int     `json:"total"`
 }
+
+// ActionConfigName is a lightweight action configuration containing only the name
+type ActionConfigName struct {
+	Name string `json:"name"`
+}
+
+// ListActionConfigNamesResponse is the response wrapper for listing action configuration names
+type ListActionConfigNamesResponse struct {
+	Items []ActionConfigName `json:"items"`
+}

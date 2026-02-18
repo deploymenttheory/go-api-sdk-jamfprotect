@@ -264,3 +264,29 @@ func buildEsExceptionInputVars(inputs []EsExceptionInput) []map[string]any {
 	}
 	return out
 }
+
+// ListExceptionSetNames retrieves only the names of all exception sets
+func (s *Service) ListExceptionSetNames(ctx context.Context) ([]string, *interfaces.Response, error) {
+	headers := map[string]string{
+		"Accept":       client.AcceptJSON,
+		"Content-Type": client.ContentTypeJSON,
+	}
+
+	var result struct {
+		ListExceptionSetNames *ListExceptionSetNamesResponse `json:"listExceptionSetNames"`
+	}
+
+	resp, err := s.client.GraphQLPost(ctx, client.EndpointApp, listExceptionSetNamesQuery, nil, &result, headers)
+	if err != nil {
+		return nil, resp, fmt.Errorf("failed to list exception set names: %w", err)
+	}
+
+	names := []string{}
+	if result.ListExceptionSetNames != nil {
+		for _, item := range result.ListExceptionSetNames.Items {
+			names = append(names, item.Name)
+		}
+	}
+
+	return names, resp, nil
+}

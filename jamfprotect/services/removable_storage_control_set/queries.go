@@ -110,3 +110,13 @@ query listUSBControlSets($nextToken: String, $direction: OrderDirection!, $field
 	}
 }
 ` + usbControlSetFields
+
+const listUSBControlSetNamesQuery = `
+query listUsbControlNames {
+	listUsbControlNames: listUSBControlSets {
+		items {
+			name
+		}
+	}
+}
+`
