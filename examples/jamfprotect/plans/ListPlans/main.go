@@ -19,7 +19,7 @@ func main() {
 	ctx := context.Background()
 
 	// List all plans (automatically handles pagination)
-	plans, err := client.Plans.ListPlans(ctx)
+	plans, _, err := client.Plan.ListPlans(ctx)
 	if err != nil {
 		log.Fatalf("Failed to list plans: %v", err)
 	}

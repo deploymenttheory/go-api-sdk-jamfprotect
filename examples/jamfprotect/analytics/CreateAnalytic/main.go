@@ -7,7 +7,7 @@ import (
 	"os"
 
 	jamfprotect "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytics"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	ctx := context.Background()
 
 	// Create a new analytic for detecting suspicious process execution
-	request := &analytics.CreateAnalyticRequest{
+	request := &analytic.CreateAnalyticRequest{
 		Name:        "Suspicious Process Execution",
 		InputType:   "es_event",
 		Description: "Detects execution of suspicious processes",
@@ -29,7 +29,7 @@ func main() {
 		Severity:    "HIGH",
 		Tags:        []string{"malware", "execution", "threat"},
 		Categories:  []string{"malware", "execution"},
-		AnalyticActions: []analytics.AnalyticActionInput{
+		AnalyticActions: []analytic.AnalyticActionInput{
 			{
 				Name:       "alert",
 				Parameters: []string{"security_team"},
@@ -39,7 +39,7 @@ func main() {
 				Parameters: []string{"process"},
 			},
 		},
-		Context: []analytics.AnalyticContextInput{
+		Context: []analytic.AnalyticContextInput{
 			{
 				Name:  "process_info",
 				Type:  "process",
@@ -54,27 +54,27 @@ func main() {
 		SnapshotFiles: []string{"/var/log/system.log"},
 	}
 
-	analytic, err := client.Analytics.CreateAnalytic(ctx, request)
+	created, _, err := client.Analytic.CreateAnalytic(ctx, request)
 	if err != nil {
 		log.Fatalf("Failed to create analytic: %v", err)
 	}
 
 	fmt.Printf("Successfully created analytic:\n")
-	fmt.Printf("  UUID: %s\n", analytic.UUID)
-	fmt.Printf("  Name: %s\n", analytic.Name)
-	fmt.Printf("  Label: %s\n", analytic.Label)
-	fmt.Printf("  Input Type: %s\n", analytic.InputType)
-	fmt.Printf("  Description: %s\n", analytic.Description)
-	fmt.Printf("  Filter: %s\n", analytic.Filter)
-	fmt.Printf("  Level: %d\n", analytic.Level)
-	fmt.Printf("  Severity: %s\n", analytic.Severity)
-	fmt.Printf("  Tags: %v\n", analytic.Tags)
-	fmt.Printf("  Categories: %v\n", analytic.Categories)
-	fmt.Printf("  Created: %s\n", analytic.Created)
-	
-	if len(analytic.AnalyticActions) > 0 {
+	fmt.Printf("  UUID: %s\n", created.UUID)
+	fmt.Printf("  Name: %s\n", created.Name)
+	fmt.Printf("  Label: %s\n", created.Label)
+	fmt.Printf("  Input Type: %s\n", created.InputType)
+	fmt.Printf("  Description: %s\n", created.Description)
+	fmt.Printf("  Filter: %s\n", created.Filter)
+	fmt.Printf("  Level: %d\n", created.Level)
+	fmt.Printf("  Severity: %s\n", created.Severity)
+	fmt.Printf("  Tags: %v\n", created.Tags)
+	fmt.Printf("  Categories: %v\n", created.Categories)
+	fmt.Printf("  Created: %s\n", created.Created)
+
+	if len(created.AnalyticActions) > 0 {
 		fmt.Printf("  Actions:\n")
-		for _, action := range analytic.AnalyticActions {
+		for _, action := range created.AnalyticActions {
 			fmt.Printf("    - %s (params: %v)\n", action.Name, action.Parameters)
 		}
 	}

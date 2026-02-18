@@ -50,8 +50,8 @@ func (s *Service) CreateUnifiedLoggingFilter(ctx context.Context, req *CreateUni
 
 // GetUnifiedLoggingFilter retrieves a unified logging filter by UUID
 func (s *Service) GetUnifiedLoggingFilter(ctx context.Context, uuid string) (*UnifiedLoggingFilter, *interfaces.Response, error) {
-	if uuid == "" {
-		return nil, nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateUnifiedLoggingFilterUUID(uuid); err != nil {
+		return nil, nil, err
 	}
 
 	headers := map[string]string{
@@ -74,8 +74,8 @@ func (s *Service) GetUnifiedLoggingFilter(ctx context.Context, uuid string) (*Un
 
 // UpdateUnifiedLoggingFilter updates an existing unified logging filter
 func (s *Service) UpdateUnifiedLoggingFilter(ctx context.Context, uuid string, req *UpdateUnifiedLoggingFilterRequest) (*UnifiedLoggingFilter, *interfaces.Response, error) {
-	if uuid == "" {
-		return nil, nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateUnifiedLoggingFilterUUID(uuid); err != nil {
+		return nil, nil, err
 	}
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
@@ -108,8 +108,8 @@ func (s *Service) UpdateUnifiedLoggingFilter(ctx context.Context, uuid string, r
 
 // DeleteUnifiedLoggingFilter deletes a unified logging filter by UUID
 func (s *Service) DeleteUnifiedLoggingFilter(ctx context.Context, uuid string) (*interfaces.Response, error) {
-	if uuid == "" {
-		return nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateUnifiedLoggingFilterUUID(uuid); err != nil {
+		return nil, err
 	}
 
 	headers := map[string]string{

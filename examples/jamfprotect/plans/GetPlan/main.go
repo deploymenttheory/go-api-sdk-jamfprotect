@@ -21,7 +21,7 @@ func main() {
 	// Get a plan by ID
 	planID := "plan-id-here" // Replace with actual plan ID
 	
-	plan, err := client.Plans.GetPlan(ctx, planID)
+	plan, _, err := client.Plan.GetPlan(ctx, planID)
 	if err != nil {
 		log.Fatalf("Failed to get plan: %v", err)
 	}

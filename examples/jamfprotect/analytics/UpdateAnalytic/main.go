@@ -7,7 +7,7 @@ import (
 	"os"
 
 	jamfprotect "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytics"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 	analyticUUID := "analytic-uuid-here" // Replace with actual analytic UUID
 	severity := "CRITICAL"
 	
-	request := &analytics.UpdateAnalyticRequest{
+	request := &analytic.UpdateAnalyticRequest{
 		Name:        "Updated Suspicious Process Execution",
 		InputType:   "es_event",
 		Description: "Updated detection for suspicious processes with enhanced filtering",
@@ -32,7 +32,7 @@ func main() {
 		Severity:    &severity,
 		Tags:        []string{"malware", "execution", "threat", "updated"},
 		Categories:  []string{"malware", "execution", "persistence"},
-		AnalyticActions: []analytics.AnalyticActionInput{
+		AnalyticActions: []analytic.AnalyticActionInput{
 			{
 				Name:       "alert",
 				Parameters: []string{"security_team", "soc"},
@@ -46,7 +46,7 @@ func main() {
 				Parameters: []string{"device"},
 			},
 		},
-		Context: []analytics.AnalyticContextInput{
+		Context: []analytic.AnalyticContextInput{
 			{
 				Name:  "process_info",
 				Type:  "process",
@@ -66,7 +66,7 @@ func main() {
 		SnapshotFiles: []string{"/var/log/system.log", "/var/log/security.log"},
 	}
 
-	analytic, err := client.Analytics.UpdateAnalytic(ctx, analyticUUID, request)
+	analytic, _, err := client.Analytic.UpdateAnalytic(ctx, analyticUUID, request)
 	if err != nil {
 		log.Fatalf("Failed to update analytic: %v", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"os"
 
 	jamfprotect "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plans"
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plan"
 )
 
 func main() {
@@ -21,38 +21,38 @@ func main() {
 
 	// Create a new plan
 	logLevel := "INFO"
-	request := &plans.CreatePlanRequest{
+	request := &plan.CreatePlanRequest{
 		Name:          "Production Security Plan",
 		Description:   "Security configuration for production systems",
 		LogLevel:      &logLevel,
 		ActionConfigs: "action-config-id-here",  // Replace with actual action config ID
 		ExceptionSets: []string{},
 		AutoUpdate:    true,
-		CommsConfig: plans.CommsConfigInput{
+		CommsConfig: plan.CommsConfigInput{
 			FQDN:     "protect.example.com",
 			Protocol: "HTTPS",
 		},
-		InfoSync: plans.InfoSyncInput{
+		InfoSync: plan.InfoSyncInput{
 			Attrs:                []string{"hostname", "osVersion"},
 			InsightsSyncInterval: 3600,
 		},
-		SignaturesFeedConfig: plans.SignaturesFeedConfigInput{
+		SignaturesFeedConfig: plan.SignaturesFeedConfigInput{
 			Mode: "AUTO",
 		},
 	}
 
-	plan, err := client.Plans.CreatePlan(ctx, request)
+	created, _, err := client.Plan.CreatePlan(ctx, request)
 	if err != nil {
 		log.Fatalf("Failed to create plan: %v", err)
 	}
 
 	fmt.Printf("Successfully created plan:\n")
-	fmt.Printf("  ID: %s\n", plan.ID)
-	fmt.Printf("  Name: %s\n", plan.Name)
-	fmt.Printf("  Description: %s\n", plan.Description)
-	fmt.Printf("  Created: %s\n", plan.Created)
-	fmt.Printf("  Log Level: %s\n", plan.LogLevel)
-	fmt.Printf("  Auto Update: %t\n", plan.AutoUpdate)
+	fmt.Printf("  ID: %s\n", created.ID)
+	fmt.Printf("  Name: %s\n", created.Name)
+	fmt.Printf("  Description: %s\n", created.Description)
+	fmt.Printf("  Created: %s\n", created.Created)
+	fmt.Printf("  Log Level: %s\n", created.LogLevel)
+	fmt.Printf("  Auto Update: %t\n", created.AutoUpdate)
 
 	os.Exit(0)
 }

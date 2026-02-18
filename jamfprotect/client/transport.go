@@ -26,14 +26,9 @@ type Transport struct {
 	globalHeaders map[string]string
 }
 
-// NewTransport creates a new Jamf Protect GraphQL transport with default settings.
+// NewTransport creates a new Jamf Protect GraphQL transport.
 func NewTransport(clientID, clientSecret string, options ...ClientOption) (*Transport, error) {
-	return NewTransportWithVersion(clientID, clientSecret, Version, options...)
-}
 
-// NewTransportWithVersion creates a new Jamf Protect GraphQL transport with a custom version string.
-func NewTransportWithVersion(clientID, clientSecret, version string, options ...ClientOption) (*Transport, error) {
-	// Validate transport configuration
 	if err := ValidateTransportConfig(clientID, clientSecret); err != nil {
 		return nil, fmt.Errorf("invalid transport configuration: %w", err)
 	}
@@ -43,7 +38,7 @@ func NewTransportWithVersion(clientID, clientSecret, version string, options ...
 		return nil, fmt.Errorf("failed to create logger: %w", err)
 	}
 
-	userAgent := fmt.Sprintf("%s/%s", UserAgentBase, version)
+	userAgent := fmt.Sprintf("%s/%s", UserAgentBase, Version)
 
 	restyClient := resty.New()
 	restyClient.SetTimeout(time.Duration(DefaultTimeout) * time.Second)

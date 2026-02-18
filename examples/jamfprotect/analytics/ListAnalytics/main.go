@@ -19,7 +19,7 @@ func main() {
 	ctx := context.Background()
 
 	// List all analytics
-	analytics, err := client.Analytics.ListAnalytics(ctx)
+	analytics, _, err := client.Analytic.ListAnalytics(ctx)
 	if err != nil {
 		log.Fatalf("Failed to list analytics: %v", err)
 	}

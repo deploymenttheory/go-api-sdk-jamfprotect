@@ -21,7 +21,7 @@ func main() {
 	// Delete a plan by ID
 	planID := "plan-id-here" // Replace with actual plan ID
 
-	err = client.Plans.DeletePlan(ctx, planID)
+	_, err = client.Plan.DeletePlan(ctx, planID)
 	if err != nil {
 		log.Fatalf("Failed to delete plan: %v", err)
 	}

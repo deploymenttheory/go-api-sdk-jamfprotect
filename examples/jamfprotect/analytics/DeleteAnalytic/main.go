@@ -21,7 +21,7 @@ func main() {
 	// Delete an analytic by UUID
 	analyticUUID := "analytic-uuid-here" // Replace with actual analytic UUID
 
-	err = client.Analytics.DeleteAnalytic(ctx, analyticUUID)
+	_, err = client.Analytic.DeleteAnalytic(ctx, analyticUUID)
 	if err != nil {
 		log.Fatalf("Failed to delete analytic: %v", err)
 	}

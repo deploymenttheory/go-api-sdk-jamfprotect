@@ -21,7 +21,7 @@ func main() {
 	// Get an analytic by UUID
 	analyticUUID := "analytic-uuid-here" // Replace with actual analytic UUID
 	
-	analytic, err := client.Analytics.GetAnalytic(ctx, analyticUUID)
+	analytic, _, err := client.Analytic.GetAnalytic(ctx, analyticUUID)
 	if err != nil {
 		log.Fatalf("Failed to get analytic: %v", err)
 	}
