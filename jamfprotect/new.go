@@ -7,15 +7,15 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/client"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/actionconfigs"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytics"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analyticsets"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/exceptionsets"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plans"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/preventlists"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/telemetryv2"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/unifiedloggingfilters"
-	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/usbcontrolsets"
+	actionconfigs "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/action_configuration"
+	analytics "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic"
+	analyticsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/analytic_set"
+	exceptionsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/exception_set"
+	preventlists "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/custom_prevent_list"
+	plans "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/plan"
+	telemetryv2 "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/telemetry"
+	usbcontrolsets "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/removable_storage_control_set"
+	unifiedloggingfilters "github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/services/unified_logging_filter"
 )
 
 // Client is the main entry point for the Jamf Protect API SDK.
@@ -26,15 +26,15 @@ type Client struct {
 	transport *client.Transport
 
 	// Services
-	ActionConfigs         *actionconfigs.Service
-	Plans                 *plans.Service
-	Analytics             *analytics.Service
-	AnalyticSets          *analyticsets.Service
-	ExceptionSets         *exceptionsets.Service
-	PreventLists          *preventlists.Service
+	ActionConfig          *actionconfigs.Service
+	Analytic              *analytics.Service
+	AnalyticSet           *analyticsets.Service
+	ExceptionSet          *exceptionsets.Service
+	PreventList           *preventlists.Service
+	Plan                  *plans.Service
 	TelemetryV2           *telemetryv2.Service
-	USBControlSets        *usbcontrolsets.Service
-	UnifiedLoggingFilters *unifiedloggingfilters.Service
+	USBControlSet         *usbcontrolsets.Service
+	UnifiedLoggingFilter  *unifiedloggingfilters.Service
 }
 
 // NewClient creates a new Jamf Protect API client
@@ -59,16 +59,16 @@ func NewClient(clientID, clientSecret string, options ...client.ClientOption) (*
 
 	// Initialize service clients
 	c := &Client{
-		transport:             transport,
-		ActionConfigs:         actionconfigs.NewService(transport),
-		Plans:                 plans.NewService(transport),
-		Analytics:             analytics.NewService(transport),
-		AnalyticSets:          analyticsets.NewService(transport),
-		ExceptionSets:         exceptionsets.NewService(transport),
-		PreventLists:          preventlists.NewService(transport),
-		TelemetryV2:           telemetryv2.NewService(transport),
-		USBControlSets:        usbcontrolsets.NewService(transport),
-		UnifiedLoggingFilters: unifiedloggingfilters.NewService(transport),
+		transport:            transport,
+		ActionConfig:         actionconfigs.NewService(transport),
+		Analytic:             analytics.NewService(transport),
+		AnalyticSet:          analyticsets.NewService(transport),
+		ExceptionSet:         exceptionsets.NewService(transport),
+		PreventList:          preventlists.NewService(transport),
+		Plan:                 plans.NewService(transport),
+		TelemetryV2:          telemetryv2.NewService(transport),
+		USBControlSet:        usbcontrolsets.NewService(transport),
+		UnifiedLoggingFilter: unifiedloggingfilters.NewService(transport),
 	}
 
 	return c, nil

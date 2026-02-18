@@ -35,8 +35,8 @@ func TestMapGraphQLErrors_NotFound(t *testing.T) {
 
 	err := MapGraphQLErrors(errors)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrNotFound)
-	assert.ErrorIs(t, err, ErrGraphQL)
+	assert.True(t, IsNotFound(err), "expected IsNotFound to be true")
+	assert.True(t, IsGraphQL(err), "expected IsGraphQL to be true")
 }
 
 func TestMapGraphQLErrors_WithPath(t *testing.T) {
@@ -106,7 +106,7 @@ func TestMapGraphQLErrors_EmptyMessages(t *testing.T) {
 
 	err := MapGraphQLErrors(errors)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrGraphQL)
+	assert.True(t, IsGraphQL(err), "expected IsGraphQL to be true")
 }
 
 func TestFormatGraphQLPath_Mixed(t *testing.T) {

@@ -1,0 +1,92 @@
+package analytic
+
+import (
+	"github.com/deploymenttheory/go-api-sdk-jamfprotect/jamfprotect/validate"
+)
+
+// Allowed values from provider schema / API enums.
+
+const (
+	InputTypeGPFSEvent             = "GPFSEvent"
+	InputTypeGPDownloadEvent       = "GPDownloadEvent"
+	InputTypeGPProcessEvent        = "GPProcessEvent"
+	InputTypeGPScreenshotEvent     = "GPScreenshotEvent"
+	InputTypeGPKeylogRegisterEvent = "GPKeylogRegisterEvent"
+	InputTypeGPClickEvent          = "GPClickEvent"
+	InputTypeGPMRTEvent            = "GPMRTEvent"
+	InputTypeGPUSBEvent            = "GPUSBEvent"
+	InputTypeGPGatekeeperEvent     = "GPGatekeeperEvent"
+)
+
+var allowedInputTypes = []string{
+	InputTypeGPFSEvent, InputTypeGPDownloadEvent, InputTypeGPProcessEvent,
+	InputTypeGPScreenshotEvent, InputTypeGPKeylogRegisterEvent, InputTypeGPClickEvent,
+	InputTypeGPMRTEvent, InputTypeGPUSBEvent, InputTypeGPGatekeeperEvent,
+}
+
+const (
+	SeverityHigh          = "High"
+	SeverityMedium        = "Medium"
+	SeverityLow           = "Low"
+	SeverityInformational = "Informational"
+)
+
+// ValidateInputType validates analytic input type (sensor type) is an allowed enum value.
+func ValidateInputType(inputType string) error {
+	return validate.OneOf("inputType", inputType, allowedInputTypes...)
+}
+
+// ValidateLevel validates analytic level is in allowed range 0-10.
+func ValidateLevel(level int) error {
+	return validate.IntBetween("level", level, 0, 10)
+}
+
+// ValidateSeverity validates analytic severity is an allowed enum value.
+func ValidateSeverity(severity string) error {
+	return validate.OneOf("severity", severity, SeverityHigh, SeverityMedium, SeverityLow, SeverityInformational)
+}
+
+// ValidateCreateAnalyticRequest validates allowed-value constraints on create analytic request.
+func ValidateCreateAnalyticRequest(req *CreateAnalyticRequest) error {
+	if req == nil {
+		return nil
+	}
+	if err := ValidateInputType(req.InputType); err != nil {
+		return err
+	}
+	if err := ValidateLevel(req.Level); err != nil {
+		return err
+	}
+	if err := ValidateSeverity(req.Severity); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ValidateUpdateAnalyticRequest validates allowed-value constraints on update analytic request.
+func ValidateUpdateAnalyticRequest(req *UpdateAnalyticRequest) error {
+	if req == nil {
+		return nil
+	}
+	if req.InputType != "" {
+		if err := ValidateInputType(req.InputType); err != nil {
+			return err
+		}
+	}
+	// Level 0 is valid; check only if caller sets a level (e.g. non-zero or explicit 0)
+	// Level is int - we always validate if it's in range when present in request
+	if err := ValidateLevel(req.Level); err != nil {
+		return err
+	}
+	if req.Severity != nil && *req.Severity != "" {
+		if err := ValidateSeverity(*req.Severity); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ValidateAnalyticID is a no-op for CRUD compatibility. UUID presence is not validated here.
+func ValidateAnalyticID(uuid string) error {
+	return nil
+}

@@ -13,8 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestNewAuthManager(t *testing.T) {
-	config := AuthConfig{
+func TestNewTokenManager(t *testing.T) {
+	config := &AuthConfig{
 		ClientID:     "test-client",
 		ClientSecret: "test-secret",
 		TokenURL:     "https://example.com/token",
@@ -23,11 +23,11 @@ func TestNewAuthManager(t *testing.T) {
 	httpClient := &http.Client{}
 	logger, _ := newTestLogger()
 
-	manager := newAuthManager(config, httpClient, logger)
+	manager := NewTokenManager(config, httpClient, logger)
 
 	assert.NotNil(t, manager)
-	assert.Equal(t, config.ClientID, manager.config.ClientID)
-	assert.Equal(t, config.ClientSecret, manager.config.ClientSecret)
+	assert.Equal(t, config.ClientID, manager.authConfig.ClientID)
+	assert.Equal(t, config.ClientSecret, manager.authConfig.ClientSecret)
 	assert.NotNil(t, manager.httpClient)
 	assert.NotNil(t, manager.logger)
 }
@@ -37,7 +37,7 @@ func newTestLogger() (*zap.Logger, error) {
 	return zap.NewDevelopment()
 }
 
-func TestAuthManager_GetToken_Success(t *testing.T) {
+func TestTokenManager_GetToken_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/token", r.URL.Path)
 		assert.Equal(t, "POST", r.Method)
@@ -53,25 +53,23 @@ func TestAuthManager_GetToken_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	config := AuthConfig{
+	config := &AuthConfig{
 		ClientID:     "test-client",
 		ClientSecret: "test-secret",
 		TokenURL:     server.URL + "/token",
 	}
 
 	logger, _ := newTestLogger()
-	manager := newAuthManager(config, http.DefaultClient, logger)
+	manager := NewTokenManager(config, http.DefaultClient, logger)
 
 	token, err := manager.GetToken(context.Background())
 
 	require.NoError(t, err)
-	assert.NotNil(t, token)
-	assert.Equal(t, "test-access-token", token.AccessToken)
-	assert.Equal(t, "Bearer", token.TokenType)
-	assert.False(t, token.Expiry.IsZero())
+	assert.Equal(t, "test-access-token", token)
+	assert.False(t, manager.tokenExpiry.IsZero())
 }
 
-func TestAuthManager_GetToken_CachesToken(t *testing.T) {
+func TestTokenManager_GetToken_CachesToken(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -87,14 +85,14 @@ func TestAuthManager_GetToken_CachesToken(t *testing.T) {
 	}))
 	defer server.Close()
 
-	config := AuthConfig{
+	config := &AuthConfig{
 		ClientID:     "test-client",
 		ClientSecret: "test-secret",
 		TokenURL:     server.URL + "/token",
 	}
 
 	logger, _ := newTestLogger()
-	manager := newAuthManager(config, http.DefaultClient, logger)
+	manager := NewTokenManager(config, http.DefaultClient, logger)
 
 	// First call should hit the server
 	token1, err := manager.GetToken(context.Background())
@@ -105,10 +103,10 @@ func TestAuthManager_GetToken_CachesToken(t *testing.T) {
 	token2, err := manager.GetToken(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 1, callCount, "Expected token to be cached")
-	assert.Equal(t, token1.AccessToken, token2.AccessToken)
+	assert.Equal(t, token1, token2)
 }
 
-func TestAuthManager_GetToken_RefreshesExpiredToken(t *testing.T) {
+func TestTokenManager_GetToken_RefreshesExpiredToken(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -124,14 +122,16 @@ func TestAuthManager_GetToken_RefreshesExpiredToken(t *testing.T) {
 	}))
 	defer server.Close()
 
-	config := AuthConfig{
+	config := &AuthConfig{
 		ClientID:     "test-client",
 		ClientSecret: "test-secret",
 		TokenURL:     server.URL + "/token",
 	}
 
 	logger, _ := newTestLogger()
-	manager := newAuthManager(config, http.DefaultClient, logger)
+	// Use a zero refreshBuffer so the 1-second token is not immediately considered stale
+	manager := NewTokenManager(config, http.DefaultClient, logger)
+	manager.refreshBuffer = 0
 
 	// Get initial token
 	token1, err := manager.GetToken(context.Background())
@@ -145,47 +145,53 @@ func TestAuthManager_GetToken_RefreshesExpiredToken(t *testing.T) {
 	token2, err := manager.GetToken(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 2, callCount, "Expected token to be refreshed")
-	assert.NotEqual(t, token1, token2)
+	assert.Equal(t, token1, token2, "Token value is same since server always returns the same value")
 }
 
-func TestAuthManager_GetToken_ErrorResponse(t *testing.T) {
+func TestTokenManager_GetToken_ErrorResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"error":"invalid_client"}`))
 	}))
 	defer server.Close()
 
-	config := AuthConfig{
+	config := &AuthConfig{
 		ClientID:     "invalid-client",
 		ClientSecret: "invalid-secret",
 		TokenURL:     server.URL + "/token",
 	}
 
 	logger, _ := newTestLogger()
-	manager := newAuthManager(config, http.DefaultClient, logger)
+	manager := NewTokenManager(config, http.DefaultClient, logger)
 
 	token, err := manager.GetToken(context.Background())
 
 	assert.Error(t, err)
-	assert.Nil(t, token)
+	assert.Empty(t, token)
 	assert.Contains(t, err.Error(), "401")
 }
 
-func TestAuthManager_CurrentToken_Empty(t *testing.T) {
-	config := AuthConfig{
+func TestTokenManager_InvalidateToken(t *testing.T) {
+	config := &AuthConfig{
 		ClientID:     "test-client",
 		ClientSecret: "test-secret",
 		TokenURL:     "https://example.com/token",
 	}
 
 	logger, _ := newTestLogger()
-	manager := newAuthManager(config, http.DefaultClient, logger)
+	manager := NewTokenManager(config, http.DefaultClient, logger)
 
-	token := manager.currentToken()
-	assert.Nil(t, token)
+	// Manually set a token to verify invalidation clears it
+	manager.currentToken = &TokenResponse{AccessToken: "some-token"}
+	manager.tokenExpiry = time.Now().Add(time.Hour)
+
+	manager.InvalidateToken()
+
+	assert.Nil(t, manager.currentToken)
+	assert.True(t, manager.tokenExpiry.IsZero())
 }
 
-func TestAuthManager_ConcurrentGetToken(t *testing.T) {
+func TestTokenManager_ConcurrentGetToken(t *testing.T) {
 	callCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
@@ -202,18 +208,18 @@ func TestAuthManager_ConcurrentGetToken(t *testing.T) {
 	}))
 	defer server.Close()
 
-	config := AuthConfig{
+	config := &AuthConfig{
 		ClientID:     "test-client",
 		ClientSecret: "test-secret",
 		TokenURL:     server.URL + "/token",
 	}
 
 	logger, _ := newTestLogger()
-	manager := newAuthManager(config, http.DefaultClient, logger)
+	manager := NewTokenManager(config, http.DefaultClient, logger)
 
 	// Launch multiple concurrent requests
 	const numConcurrent = 10
-	tokens := make([]*http.Cookie, numConcurrent)
+	tokens := make([]string, numConcurrent)
 	errors := make([]error, numConcurrent)
 	done := make(chan struct{}, numConcurrent)
 
@@ -222,10 +228,7 @@ func TestAuthManager_ConcurrentGetToken(t *testing.T) {
 			defer func() { done <- struct{}{} }()
 			token, err := manager.GetToken(context.Background())
 			errors[idx] = err
-			if token != nil {
-				// Store something to verify token was returned
-				tokens[idx] = &http.Cookie{Name: token.AccessToken}
-			}
+			tokens[idx] = token
 		}(i)
 	}
 
@@ -237,11 +240,34 @@ func TestAuthManager_ConcurrentGetToken(t *testing.T) {
 	// Verify all requests succeeded
 	for i := 0; i < numConcurrent; i++ {
 		assert.NoError(t, errors[i], "Request %d failed", i)
-		assert.NotNil(t, tokens[i], "Request %d didn't get a token", i)
+		assert.NotEmpty(t, tokens[i], "Request %d didn't get a token", i)
 	}
 
-	// singleflight should ensure only one actual HTTP call was made
-	assert.Equal(t, 1, callCount, "Expected only one token fetch due to singleflight")
+	// Mutex double-check pattern ensures only one actual HTTP call is made
+	assert.Equal(t, 1, callCount, "Expected only one token fetch")
+}
+
+func TestAuthConfig_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  AuthConfig
+		wantErr bool
+	}{
+		{"valid", AuthConfig{ClientID: "id", ClientSecret: "secret", TokenURL: "https://example.com/token"}, false},
+		{"missing client ID", AuthConfig{ClientSecret: "secret", TokenURL: "https://example.com/token"}, true},
+		{"missing client secret", AuthConfig{ClientID: "id", TokenURL: "https://example.com/token"}, true},
+		{"missing token URL", AuthConfig{ClientID: "id", ClientSecret: "secret"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestRedactTokenRequestBody(t *testing.T) {

@@ -22,10 +22,7 @@ const (
 const (
 	// UserAgentBase is the base name for the user agent
 	UserAgentBase = "go-api-sdk-jamfprotect"
-	
-	// Version is the SDK version
-	Version = "1.0.0"
-	
+
 	// DefaultUserAgent is the default user agent string
 	DefaultUserAgent = UserAgentBase + "/" + Version
 )

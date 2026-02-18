@@ -11,8 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
-	"golang.org/x/sync/singleflight"
+	"resty.dev/v3"
 )
 
 // TokenRequest is the payload sent to the /token endpoint
@@ -35,99 +34,126 @@ type AuthConfig struct {
 	TokenURL     string
 }
 
-// authManager handles token acquisition and refresh
-type authManager struct {
-	config     AuthConfig
-	httpClient *http.Client
-	logger     *zap.Logger
-	mu         sync.RWMutex
-	token      *oauth2.Token
-	tokenGroup singleflight.Group
-}
-
-// newAuthManager creates a new authentication manager
-func newAuthManager(config AuthConfig, httpClient *http.Client, logger *zap.Logger) *authManager {
-	return &authManager{
-		config:     config,
-		httpClient: httpClient,
-		logger:     logger,
+// Validate checks if the auth configuration is valid
+func (a *AuthConfig) Validate() error {
+	if a.ClientID == "" {
+		return fmt.Errorf("client ID is required")
 	}
-}
-
-// GetToken ensures a valid token is available and returns it
-func (am *authManager) GetToken(ctx context.Context) (*oauth2.Token, error) {
-	token, err := am.authenticate(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrAuthentication, err)
+	if a.ClientSecret == "" {
+		return fmt.Errorf("client secret is required")
 	}
-	return token, nil
-}
-
-// authenticate obtains (or refreshes) an access token (thread-safe)
-func (am *authManager) authenticate(ctx context.Context) (*oauth2.Token, error) {
-	if token := am.currentToken(); token != nil {
-		return token, nil
-	}
-
-	value, err, _ := am.tokenGroup.Do("token", func() (any, error) {
-		if token := am.currentToken(); token != nil {
-			return token, nil
-		}
-		token, err := am.fetchToken(ctx)
-		if err != nil {
-			return nil, err
-		}
-		am.mu.Lock()
-		am.token = token
-		am.mu.Unlock()
-		return token, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	token, ok := value.(*oauth2.Token)
-	if !ok {
-		return nil, fmt.Errorf("unexpected token type %T", value)
-	}
-	return token, nil
-}
-
-// currentToken returns the current token if it's valid, or nil if it's missing or expired
-func (am *authManager) currentToken() *oauth2.Token {
-	am.mu.RLock()
-	defer am.mu.RUnlock()
-	if am.token != nil && am.token.Valid() {
-		return am.token
+	if a.TokenURL == "" {
+		return fmt.Errorf("token URL is required")
 	}
 	return nil
 }
 
+// TokenManager handles OAuth2 token lifecycle
+type TokenManager struct {
+	authConfig    *AuthConfig
+	httpClient    *http.Client
+	logger        *zap.Logger
+	currentToken  *TokenResponse
+	tokenExpiry   time.Time
+	mu            sync.RWMutex
+	refreshBuffer time.Duration
+}
+
+// NewTokenManager creates a new token manager
+func NewTokenManager(authConfig *AuthConfig, httpClient *http.Client, logger *zap.Logger) *TokenManager {
+	return &TokenManager{
+		authConfig:    authConfig,
+		httpClient:    httpClient,
+		logger:        logger,
+		refreshBuffer: time.Duration(TokenExpirySkew) * time.Second,
+	}
+}
+
+// GetToken returns a valid access token, refreshing if necessary
+func (tm *TokenManager) GetToken(ctx context.Context) (string, error) {
+	tm.mu.RLock()
+	if tm.currentToken != nil && time.Now().Add(tm.refreshBuffer).Before(tm.tokenExpiry) {
+		token := tm.currentToken.AccessToken
+		tm.mu.RUnlock()
+		return token, nil
+	}
+	tm.mu.RUnlock()
+
+	return tm.RefreshToken(ctx)
+}
+
+// RefreshToken requests a new access token from the OAuth2 endpoint (thread-safe)
+func (tm *TokenManager) RefreshToken(ctx context.Context) (string, error) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	// Double-check in case another goroutine just refreshed
+	if tm.currentToken != nil && time.Now().Add(tm.refreshBuffer).Before(tm.tokenExpiry) {
+		return tm.currentToken.AccessToken, nil
+	}
+
+	if tm.logger != nil {
+		tm.logger.Info("Requesting new OAuth2 access token",
+			zap.String("token_url", tm.authConfig.TokenURL))
+	}
+
+	tokenResp, err := tm.fetchToken(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	tm.currentToken = tokenResp
+	tm.tokenExpiry = time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
+
+	if tm.logger != nil {
+		tm.logger.Info("Successfully obtained access token",
+			zap.String("token_type", tokenResp.TokenType),
+			zap.Int64("expires_in", tokenResp.ExpiresIn),
+			zap.Time("expires_at", tm.tokenExpiry))
+	}
+
+	return tokenResp.AccessToken, nil
+}
+
+// InvalidateToken clears the current token, forcing a refresh on next use
+func (tm *TokenManager) InvalidateToken() {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	tm.currentToken = nil
+	tm.tokenExpiry = time.Time{}
+
+	if tm.logger != nil {
+		tm.logger.Info("Access token invalidated")
+	}
+}
+
 // fetchToken performs the actual HTTP request to obtain a new access token
-func (am *authManager) fetchToken(ctx context.Context) (*oauth2.Token, error) {
+func (tm *TokenManager) fetchToken(ctx context.Context) (*TokenResponse, error) {
 	body, err := json.Marshal(TokenRequest{
-		ClientID: am.config.ClientID,
-		Password: am.config.ClientSecret,
+		ClientID: tm.authConfig.ClientID,
+		Password: tm.authConfig.ClientSecret,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshalling token request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		am.config.TokenURL, bytes.NewReader(body))
+		tm.authConfig.TokenURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("creating token request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", DefaultUserAgent)
 
-	if am.logger != nil {
-		am.logger.Debug("OAuth2 token request",
+	if tm.logger != nil {
+		tm.logger.Debug("OAuth2 token request",
 			zap.String("method", http.MethodPost),
 			zap.String("url", req.URL.String()),
-			zap.ByteString("body", redactTokenRequestBody(am.config.ClientID)))
+			zap.ByteString("body", redactTokenRequestBody(tm.authConfig.ClientID)))
 	}
 
-	resp, err := am.httpClient.Do(req)
+	resp, err := tm.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("requesting token: %w", err)
 	}
@@ -137,8 +163,9 @@ func (am *authManager) fetchToken(ctx context.Context) (*oauth2.Token, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading token response: %w", err)
 	}
-	if am.logger != nil {
-		am.logger.Debug("OAuth2 token response",
+
+	if tm.logger != nil {
+		tm.logger.Debug("OAuth2 token response",
 			zap.Int("status_code", resp.StatusCode),
 			zap.ByteString("body", redactTokenResponseBody(respBody)))
 	}
@@ -151,6 +178,7 @@ func (am *authManager) fetchToken(ctx context.Context) (*oauth2.Token, error) {
 	if err := json.Unmarshal(respBody, &tokenResp); err != nil {
 		return nil, fmt.Errorf("decoding token response: %w", err)
 	}
+
 	if tokenResp.AccessToken == "" {
 		return nil, fmt.Errorf("%w: token response missing access_token", ErrAuthentication)
 	}
@@ -159,15 +187,48 @@ func (am *authManager) fetchToken(ctx context.Context) (*oauth2.Token, error) {
 		return nil, fmt.Errorf("%w: token response missing expires_in", ErrAuthentication)
 	}
 
-	expiry := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
-	if time.Duration(tokenResp.ExpiresIn)*time.Second > time.Duration(TokenExpirySkew)*time.Second {
-		expiry = expiry.Add(-time.Duration(TokenExpirySkew) * time.Second)
+	return &tokenResp, nil
+}
+
+// SetupAuthentication configures the resty client with OAuth2 bearer token authentication
+func SetupAuthentication(client *resty.Client, authConfig *AuthConfig, logger *zap.Logger) (*TokenManager, error) {
+	if err := authConfig.Validate(); err != nil {
+		if logger != nil {
+			logger.Error("Authentication validation failed", zap.Error(err))
+		}
+		return nil, fmt.Errorf("authentication validation failed: %w", err)
 	}
-	return &oauth2.Token{
-		AccessToken: tokenResp.AccessToken,
-		TokenType:   tokenResp.TokenType,
-		Expiry:      expiry,
-	}, nil
+
+	// Use the underlying *http.Client for token requests so they bypass resty middleware
+	tokenManager := NewTokenManager(authConfig, client.Client(), logger)
+
+	// Fetch initial token
+	token, err := tokenManager.RefreshToken(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain initial access token: %w", err)
+	}
+
+	client.SetAuthToken(token)
+
+	// Add request middleware to ensure token is valid before each request
+	client.AddRequestMiddleware(func(c *resty.Client, req *resty.Request) error {
+		token, err := tokenManager.GetToken(req.Context())
+		if err != nil {
+			if logger != nil {
+				logger.Error("Failed to get valid token for request", zap.Error(err))
+			}
+			return fmt.Errorf("%w: %w", ErrAuthentication, err)
+		}
+		req.SetAuthToken(token)
+		return nil
+	})
+
+	if logger != nil {
+		logger.Info("OAuth2 authentication configured successfully",
+			zap.String("token_url", authConfig.TokenURL))
+	}
+
+	return tokenManager, nil
 }
 
 // redactTokenRequestBody creates a redacted version of the token request body for logging
