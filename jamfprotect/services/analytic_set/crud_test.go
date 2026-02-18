@@ -15,6 +15,8 @@ import (
 
 const testBaseURL = "https://test.jamfprotect.example.com"
 
+const testUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+
 func setupMockClient(t *testing.T) (*analyticset.Service, string) {
 	t.Helper()
 
@@ -56,7 +58,7 @@ func TestAnalyticSetService_CreateAnalyticSet(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Test Analytic Set", result.Name)
 }
 
@@ -65,11 +67,11 @@ func TestAnalyticSetService_GetAnalyticSet(t *testing.T) {
 	mockHandler := mocks.NewAnalyticSetMock(baseURL)
 	mockHandler.RegisterGetAnalyticSetMock()
 
-	result, _, err := service.GetAnalyticSet(context.Background(), "test-uuid-1234")
+	result, _, err := service.GetAnalyticSet(context.Background(), testUUID)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Test Analytic Set", result.Name)
 }
 
@@ -84,11 +86,11 @@ func TestAnalyticSetService_UpdateAnalyticSet(t *testing.T) {
 		Analytics:   []string{"analytic-uuid-1"},
 	}
 
-	result, _, err := service.UpdateAnalyticSet(context.Background(), "test-uuid-1234", req)
+	result, _, err := service.UpdateAnalyticSet(context.Background(), testUUID, req)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Updated Analytic Set", result.Name)
 }
 
@@ -97,7 +99,7 @@ func TestAnalyticSetService_DeleteAnalyticSet(t *testing.T) {
 	mockHandler := mocks.NewAnalyticSetMock(baseURL)
 	mockHandler.RegisterDeleteAnalyticSetMock()
 
-	_, err := service.DeleteAnalyticSet(context.Background(), "test-uuid-1234")
+	_, err := service.DeleteAnalyticSet(context.Background(), testUUID)
 
 	require.NoError(t, err)
 }
@@ -111,7 +113,7 @@ func TestAnalyticSetService_ListAnalyticSets(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, result, 1)
-	assert.Equal(t, "test-uuid-1234", result[0].UUID)
+	assert.Equal(t, testUUID, result[0].UUID)
 }
 
 func TestAnalyticSetService_ValidationErrors(t *testing.T) {

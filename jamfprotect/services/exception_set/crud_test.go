@@ -15,6 +15,8 @@ import (
 
 const testBaseURL = "https://test.jamfprotect.example.com"
 
+const testUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+
 func setupMockClient(t *testing.T) (*exceptionset.Service, string) {
 	t.Helper()
 
@@ -55,7 +57,7 @@ func TestExceptionSetService_CreateExceptionSet(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Test Exception Set", result.Name)
 }
 
@@ -64,11 +66,11 @@ func TestExceptionSetService_GetExceptionSet(t *testing.T) {
 	mockHandler := mocks.NewExceptionSetMock(baseURL)
 	mockHandler.RegisterGetExceptionSetMock()
 
-	result, _, err := service.GetExceptionSet(context.Background(), "test-uuid-1234")
+	result, _, err := service.GetExceptionSet(context.Background(), testUUID)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Test Exception Set", result.Name)
 }
 
@@ -82,11 +84,11 @@ func TestExceptionSetService_UpdateExceptionSet(t *testing.T) {
 		Description: "An updated exception set",
 	}
 
-	result, _, err := service.UpdateExceptionSet(context.Background(), "test-uuid-1234", req)
+	result, _, err := service.UpdateExceptionSet(context.Background(), testUUID, req)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Updated Exception Set", result.Name)
 }
 
@@ -95,7 +97,7 @@ func TestExceptionSetService_DeleteExceptionSet(t *testing.T) {
 	mockHandler := mocks.NewExceptionSetMock(baseURL)
 	mockHandler.RegisterDeleteExceptionSetMock()
 
-	_, err := service.DeleteExceptionSet(context.Background(), "test-uuid-1234")
+	_, err := service.DeleteExceptionSet(context.Background(), testUUID)
 
 	require.NoError(t, err)
 }
@@ -109,7 +111,7 @@ func TestExceptionSetService_ListExceptionSets(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, result, 1)
-	assert.Equal(t, "test-uuid-1234", result[0].UUID)
+	assert.Equal(t, testUUID, result[0].UUID)
 }
 
 func TestExceptionSetService_ListExceptionSetNames(t *testing.T) {

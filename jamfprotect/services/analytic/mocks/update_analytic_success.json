@@ -1,1 +1,1 @@
-{"data":{"updateAnalytic":{"uuid":"test-uuid-1234","name":"Updated Analytic","label":"updated_analytic","inputType":"GPFSEvent","filter":"","description":"An updated test analytic","created":"2024-01-01T00:00:00Z","updated":"2024-01-02T00:00:00Z"}}}
+{"data":{"updateAnalytic":{"uuid":"aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee","name":"Updated Analytic","label":"updated_analytic","inputType":"GPFSEvent","filter":"","description":"An updated test analytic","created":"2024-01-01T00:00:00Z","updated":"2024-01-02T00:00:00Z"}}}

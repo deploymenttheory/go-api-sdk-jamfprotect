@@ -50,8 +50,8 @@ func (s *Service) CreateAnalyticSet(ctx context.Context, req *CreateAnalyticSetR
 
 // GetAnalyticSet retrieves an analytic set by UUID
 func (s *Service) GetAnalyticSet(ctx context.Context, uuid string) (*AnalyticSet, *interfaces.Response, error) {
-	if uuid == "" {
-		return nil, nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateAnalyticSetUUID(uuid); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
 	headers := map[string]string{
@@ -78,8 +78,8 @@ func (s *Service) GetAnalyticSet(ctx context.Context, uuid string) (*AnalyticSet
 
 // UpdateAnalyticSet updates an existing analytic set
 func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *UpdateAnalyticSetRequest) (*AnalyticSet, *interfaces.Response, error) {
-	if uuid == "" {
-		return nil, nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateAnalyticSetUUID(uuid); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
@@ -111,8 +111,8 @@ func (s *Service) UpdateAnalyticSet(ctx context.Context, uuid string, req *Updat
 
 // DeleteAnalyticSet deletes an analytic set by UUID
 func (s *Service) DeleteAnalyticSet(ctx context.Context, uuid string) (*interfaces.Response, error) {
-	if uuid == "" {
-		return nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateAnalyticSetUUID(uuid); err != nil {
+		return nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
 	headers := map[string]string{

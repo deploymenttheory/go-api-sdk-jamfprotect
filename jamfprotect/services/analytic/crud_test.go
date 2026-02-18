@@ -15,6 +15,8 @@ import (
 
 const testBaseURL = "https://test.jamfprotect.example.com"
 
+const testUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+
 func setupMockClient(t *testing.T) (*analytic.Service, string) {
 	t.Helper()
 
@@ -59,7 +61,7 @@ func TestAnalyticService_CreateAnalytic(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Test Analytic", result.Name)
 }
 
@@ -68,11 +70,11 @@ func TestAnalyticService_GetAnalytic(t *testing.T) {
 	mockHandler := mocks.NewAnalyticMock(baseURL)
 	mockHandler.RegisterGetAnalyticMock()
 
-	result, _, err := service.GetAnalytic(context.Background(), "test-uuid-1234")
+	result, _, err := service.GetAnalytic(context.Background(), testUUID)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Test Analytic", result.Name)
 }
 
@@ -89,11 +91,11 @@ func TestAnalyticService_UpdateAnalytic(t *testing.T) {
 		Level:       5,
 	}
 
-	result, _, err := service.UpdateAnalytic(context.Background(), "test-uuid-1234", req)
+	result, _, err := service.UpdateAnalytic(context.Background(), testUUID, req)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, "test-uuid-1234", result.UUID)
+	assert.Equal(t, testUUID, result.UUID)
 	assert.Equal(t, "Updated Analytic", result.Name)
 }
 
@@ -102,7 +104,7 @@ func TestAnalyticService_DeleteAnalytic(t *testing.T) {
 	mockHandler := mocks.NewAnalyticMock(baseURL)
 	mockHandler.RegisterDeleteAnalyticMock()
 
-	_, err := service.DeleteAnalytic(context.Background(), "test-uuid-1234")
+	_, err := service.DeleteAnalytic(context.Background(), testUUID)
 
 	require.NoError(t, err)
 }
@@ -116,7 +118,7 @@ func TestAnalyticService_ListAnalytics(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, result, 1)
-	assert.Equal(t, "test-uuid-1234", result[0].UUID)
+	assert.Equal(t, testUUID, result[0].UUID)
 	assert.Equal(t, "Test Analytic", result[0].Name)
 }
 
@@ -129,7 +131,7 @@ func TestAnalyticService_ListAnalyticsLite(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, result, 1)
-	assert.Equal(t, "test-uuid-1234", result[0].UUID)
+	assert.Equal(t, testUUID, result[0].UUID)
 	assert.Equal(t, "Test Analytic", result[0].Name)
 }
 

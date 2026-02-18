@@ -50,8 +50,8 @@ func (s *Service) CreateExceptionSet(ctx context.Context, req *CreateExceptionSe
 
 // GetExceptionSet retrieves an exception set by UUID
 func (s *Service) GetExceptionSet(ctx context.Context, uuid string) (*ExceptionSet, *interfaces.Response, error) {
-	if uuid == "" {
-		return nil, nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateExceptionSetUUID(uuid); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
 	headers := map[string]string{
@@ -78,8 +78,8 @@ func (s *Service) GetExceptionSet(ctx context.Context, uuid string) (*ExceptionS
 
 // UpdateExceptionSet updates an existing exception set
 func (s *Service) UpdateExceptionSet(ctx context.Context, uuid string, req *UpdateExceptionSetRequest) (*ExceptionSet, *interfaces.Response, error) {
-	if uuid == "" {
-		return nil, nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateExceptionSetUUID(uuid); err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 	if req == nil {
 		return nil, nil, fmt.Errorf("%w: request cannot be nil", client.ErrInvalidInput)
@@ -111,8 +111,8 @@ func (s *Service) UpdateExceptionSet(ctx context.Context, uuid string, req *Upda
 
 // DeleteExceptionSet deletes an exception set by UUID
 func (s *Service) DeleteExceptionSet(ctx context.Context, uuid string) (*interfaces.Response, error) {
-	if uuid == "" {
-		return nil, fmt.Errorf("%w: uuid is required", client.ErrInvalidInput)
+	if err := ValidateExceptionSetUUID(uuid); err != nil {
+		return nil, fmt.Errorf("%w: %v", client.ErrInvalidInput, err)
 	}
 
 	headers := map[string]string{
